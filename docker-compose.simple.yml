@@ -1,0 +1,20 @@
+# 简化版 docker-compose，仅用于开发或使用 Supabase 云服务
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: nodeapis-app
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env.local
+    environment:
+      - NODE_ENV=production
+
+# 使用方法:
+# 1. 复制 .env.example 为 .env.local 并填入你的 Supabase 配置
+# 2. 运行: docker-compose -f docker-compose.simple.yml up -d --build
