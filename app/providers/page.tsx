@@ -17,23 +17,29 @@ import {
   Zap,
   Globe,
 } from "lucide-react"
-import type { Provider } from "@/lib/types"
-
-const categories = ["全部", "GPT", "Claude", "Gemini", "开源"]
+import type { Provider, Vendor } from "@/lib/types"
 
 export default function ProvidersPage() {
   const [providers, setProviders] = useState<Provider[]>([])
+  const [vendors, setVendors] = useState<Vendor[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedCategory, setSelectedCategory] = useState("全部")
 
   useEffect(() => {
-    async function fetchProviders() {
+    async function fetchData() {
       try {
-        const res = await fetch("/api/providers")
-        const data = await res.json()
-        if (data.success && data.data) {
-          setProviders(data.data)
+        const [providersRes, vendorsRes] = await Promise.all([
+          fetch("/api/providers"),
+          fetch("/api/vendors")
+        ])
+        const providersData = await providersRes.json()
+        const vendorsData = await vendorsRes.json()
+        if (providersData.success && providersData.data) {
+          setProviders(providersData.data)
+        }
+        if (vendorsData.success && vendorsData.data) {
+          setVendors(vendorsData.data)
         }
       } catch (error) {
         console.error("获取数据失败:", error)
@@ -41,7 +47,7 @@ export default function ProvidersPage() {
         setLoading(false)
       }
     }
-    fetchProviders()
+    fetchData()
   }, [])
 
   const filtered = providers.filter((p) => {
@@ -50,6 +56,9 @@ export default function ProvidersPage() {
       (p.description || "").toLowerCase().includes(searchQuery.toLowerCase())
     const matchCategory =
       selectedCategory === "全部" ||
+      (p.supported_vendors || []).some((v) =>
+        v.toLowerCase().includes(selectedCategory.toLowerCase())
+      ) ||
       (p.supported_models || []).some((m) =>
         m.toLowerCase().includes(selectedCategory.toLowerCase())
       )
@@ -90,15 +99,23 @@ export default function ProvidersPage() {
               />
             </div>
             <div className="flex flex-wrap gap-2">
-              {categories.map((cat) => (
+              <Button
+                variant={selectedCategory === "全部" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setSelectedCategory("全部")}
+                className="rounded-full"
+              >
+                全部
+              </Button>
+              {vendors.map((vendor) => (
                 <Button
-                  key={cat}
-                  variant={selectedCategory === cat ? "default" : "outline"}
+                  key={vendor.id}
+                  variant={selectedCategory === vendor.name ? "default" : "outline"}
                   size="sm"
-                  onClick={() => setSelectedCategory(cat)}
+                  onClick={() => setSelectedCategory(vendor.name)}
                   className="rounded-full"
                 >
-                  {cat}
+                  {vendor.name}
                 </Button>
               ))}
             </div>
@@ -167,8 +184,7 @@ function ProviderCard({ provider, featured }: { provider: Provider; featured?: b
             src={provider.screenshot_url}
             alt={provider.name}
             fill
-            className="object-cover object-top transition-transform group-hover:scale-105"
-            unoptimized
+            className="object-cover transition-transform group-hover:scale-105"
           />
         ) : (
           <div className="w-full h-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
@@ -180,17 +196,14 @@ function ProviderCard({ provider, featured }: { provider: Provider; featured?: b
             <Badge className="bg-primary text-primary-foreground gap-1"><Zap className="h-3 w-3" /> 推荐</Badge>
           </div>
         )}
-        <a
-          href={provider.website}
-          target="_blank"
-          rel="noopener noreferrer"
-          onClick={(e) => e.stopPropagation()}
-          className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity"
+        <span
+          onClick={(e) => { e.stopPropagation(); window.open(provider.website, '_blank', 'noopener,noreferrer') }}
+          className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
         >
           <span className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-white/90 text-sm font-medium text-foreground shadow">
             访问官网 <ExternalLink className="h-3.5 w-3.5" />
           </span>
-        </a>
+        </span>
         {(provider.features || []).length > 0 && (
           <div className="absolute bottom-2 left-2 flex flex-wrap gap-1">
             {provider.features.slice(0, 3).map((f) => (
@@ -203,7 +216,7 @@ function ProviderCard({ provider, featured }: { provider: Provider; featured?: b
       <div className="p-4">
         <div className="flex items-center gap-3 mb-3">
           {provider.logo_url ? (
-            <Image src={provider.logo_url} alt="" width={36} height={36} className="rounded-lg shrink-0" unoptimized />
+            <Image src={provider.logo_url} alt="" width={36} height={36} className="rounded-lg shrink-0" />
           ) : (
             <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
               <span className="text-sm font-bold text-primary">{provider.name.charAt(0)}</span>
@@ -214,7 +227,7 @@ function ProviderCard({ provider, featured }: { provider: Provider; featured?: b
               {provider.name}
               {provider.is_verified && <CheckCircle2 className="h-4 w-4 text-blue-500 shrink-0" />}
             </h3>
-            <a href={provider.website} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="inline-flex items-center gap-1 text-xs text-primary hover:underline shrink-0">访问官网<ExternalLink className="h-3 w-3" /></a>
+            <span onClick={(e) => { e.stopPropagation(); window.open(provider.website, '_blank', 'noopener,noreferrer') }} className="inline-flex items-center gap-1 text-xs text-primary hover:underline shrink-0 cursor-pointer">访问官网<ExternalLink className="h-3 w-3" /></span>
           </div>
         </div>
 

@@ -7,7 +7,7 @@ const SUBMIT_REWARD_POINTS = 50
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { name, description, website, contact_email, supported_models, supported_vendors, pricing, features, logo_url, screenshot_url } = body
+    const { name, description, website, api_url, contact_email, contact, supported_models, supported_vendors, pricing, features, logo_url, screenshot_url, register_type, min_deposit, payment_methods, free_trial, advantages } = body
 
     if (!name || !website) {
       return NextResponse.json(
@@ -18,19 +18,31 @@ export async function POST(request: Request) {
 
     const supabase = createAdminClient()
 
+    // 获取当前用户
+    const userSupabase = await createClient()
+    const { data: { user } } = await userSupabase.auth.getUser()
+
     const { data, error } = await supabase
       .from('provider_submissions')
       .insert({
+        user_id: user?.id || null,
         name,
         description,
         website,
+        api_url: api_url || '',
         contact_email,
+        contact: contact || '',
         supported_models: supported_models || [],
         supported_vendors: supported_vendors || [],
         pricing: pricing || [],
         features: features || [],
         logo_url: logo_url || '',
         screenshot_url: screenshot_url || '',
+        register_type: register_type || '',
+        min_deposit: min_deposit || '',
+        payment_methods: payment_methods || [],
+        free_trial: free_trial || false,
+        advantages: advantages || [],
         status: 'pending'
       })
       .select()

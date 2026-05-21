@@ -78,6 +78,7 @@ export interface Provider {
   name: string
   description: string
   website: string
+  api_url?: string
   logo_url?: string
   screenshot_url?: string
   status: 'online' | 'offline' | 'maintenance'
@@ -87,6 +88,12 @@ export interface Provider {
   supported_models: string[]
   supported_vendors: string[]
   pricing: PricingTier[]
+  register_type?: string
+  contact?: string
+  min_deposit?: string
+  payment_methods?: string[]
+  free_trial?: boolean
+  advantages?: string[]
   created_at: string
   updated_at: string
   is_verified: boolean
@@ -103,6 +110,7 @@ export interface ProviderInput {
   name: string
   description: string
   website: string
+  api_url?: string
   logo_url?: string
   screenshot_url?: string
   status?: 'online' | 'offline' | 'maintenance'
@@ -112,6 +120,12 @@ export interface ProviderInput {
   supported_models?: string[]
   supported_vendors?: string[]
   pricing?: PricingTier[]
+  register_type?: string
+  contact?: string
+  min_deposit?: string
+  payment_methods?: string[]
+  free_trial?: boolean
+  advantages?: string[]
   is_verified?: boolean
   is_featured?: boolean
 }
@@ -123,13 +137,20 @@ export interface ProviderSubmission {
   name: string
   description?: string
   website: string
+  api_url?: string
   logo_url?: string
   screenshot_url?: string
   contact_email?: string
+  contact?: string
   supported_models: string[]
   supported_vendors?: string[]
   pricing?: PricingTier[]
   features?: string[]
+  register_type?: string
+  min_deposit?: string
+  payment_methods?: string[]
+  free_trial?: boolean
+  advantages?: string[]
   status: 'pending' | 'approved' | 'rejected'
   submitted_at: string
   reviewed_at?: string
@@ -208,6 +229,23 @@ export interface Announcement {
 export interface AdminUser {
   id: string
   email: string
+  created_at: string
+}
+
+// 广告/赞助位
+export interface Advertisement {
+  id: string
+  title: string
+  description: string
+  logo_url: string
+  link: string
+  link_type: 'internal' | 'external'
+  placement: 'home_top' | 'home_featured' | 'detail_sidebar' | 'detail_bottom'
+  sort_order: number
+  is_active: boolean
+  btn_text: string
+  start_time?: string
+  end_time?: string
   created_at: string
 }
 

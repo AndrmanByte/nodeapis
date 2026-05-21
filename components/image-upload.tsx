@@ -25,8 +25,8 @@ export function ImageUpload({ value, onChange, label, hint, aspect = "wide" }: I
     try {
       const url = await uploadImage(file)
       onChange(url)
-    } catch {
-      setError("上传失败，请重试")
+    } catch (err) {
+      setError(err instanceof Error && err.name === 'AbortError' ? '上传超时，请关闭VPN后重试' : '上传失败，请重试')
     } finally {
       setUploading(false)
     }
@@ -48,11 +48,9 @@ export function ImageUpload({ value, onChange, label, hint, aspect = "wide" }: I
     <div className="space-y-2">
       <label className="text-sm font-medium text-foreground">{label}</label>
       {value ? (
-        <div className="relative group">
-          <div className={`overflow-hidden rounded-lg border border-border ${aspect === "square" ? "aspect-square w-32" : "aspect-video w-full"}`}>
-            <img src={value} alt="" className="w-full h-full object-cover" />
-          </div>
-          <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg">
+        <div className={`relative group overflow-hidden rounded-lg border border-border ${aspect === "square" ? "aspect-square w-32" : "aspect-video w-full"}`}>
+          <img src={value} alt="" className="w-full h-full object-cover" />
+          <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity">
             <Button size="sm" variant="secondary" onClick={() => onChange("")} className="gap-1">
               <X className="h-3.5 w-3.5" /> 移除
             </Button>

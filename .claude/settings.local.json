@@ -16,7 +16,11 @@
       "Bash(cp:*)",
       "Bash(ls:*)",
       "Bash(npx tsc:*)",
-      "Bash(gh auth:*)"
+      "Bash(gh auth:*)",
+      "Bash(gh repo:*)",
+      "Bash(npx vercel:*)",
+      "Bash(cmd:*)",
+      "Bash(nslookup:*)"
     ]
   }
 }

@@ -19,14 +19,12 @@ import {
   Tag,
   ThumbsUp,
   ThumbsDown,
-  Mail,
   Copy,
   Check,
   Send,
   Sparkles,
-  Star,
 } from "lucide-react"
-import type { Provider } from "@/lib/types"
+import type { Provider, Advertisement } from "@/lib/types"
 
 export default function ProviderDetailPage() {
   const params = useParams()
@@ -36,6 +34,8 @@ export default function ProviderDetailPage() {
   const [liked, setLiked] = useState(false)
   const [feedback, setFeedback] = useState<"up" | "down" | null>(null)
   const [copied, setCopied] = useState(false)
+  const [sidebarAds, setSidebarAds] = useState<Advertisement[]>([])
+  const [bottomAds, setBottomAds] = useState<Advertisement[]>([])
 
   useEffect(() => {
     async function fetchProvider() {
@@ -54,6 +54,16 @@ export default function ProviderDetailPage() {
       }
     }
     if (params.id) fetchProvider()
+
+    fetch('/api/advertisements?placement=detail_sidebar')
+      .then(res => res.json())
+      .then(data => { if (data.success) setSidebarAds(data.data || []) })
+      .catch(() => {})
+
+    fetch('/api/advertisements?placement=detail_bottom')
+      .then(res => res.json())
+      .then(data => { if (data.success) setBottomAds(data.data || []) })
+      .catch(() => {})
   }, [params.id])
 
   const handleCopyLink = () => {
@@ -103,33 +113,55 @@ export default function ProviderDetailPage() {
             {/* Left: Provider Details */}
             <div className="flex-1 min-w-0 space-y-6">
               {/* Info Card */}
-              <div className="rounded-xl border border-border bg-card p-6">
-                <div className="flex items-start gap-5">
-                  {provider.logo_url ? (
-                    <img src={provider.logo_url} alt={provider.name} className="w-16 h-16 rounded-xl object-cover shrink-0 border border-border" />
-                  ) : (
-                    <div className="w-16 h-16 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-                      <span className="text-2xl font-bold text-primary">{provider.name.charAt(0)}</span>
+              <div className="rounded-xl border border-border bg-card overflow-hidden">
+                {/* Screenshot */}
+                {provider.screenshot_url && (
+                  <div className="h-48 overflow-hidden bg-muted">
+                    <img src={provider.screenshot_url} alt={`${provider.name} 截图`} className="w-full h-full object-cover object-top" />
+                  </div>
+                )}
+                <div className="p-6">
+                  <div className="flex items-start gap-5">
+                    {provider.logo_url ? (
+                      <img src={provider.logo_url} alt={provider.name} className="w-14 h-14 rounded-xl object-cover shrink-0 border border-border -mt-8 bg-card" />
+                    ) : (
+                      <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 -mt-8 border border-border bg-card">
+                        <span className="text-xl font-bold text-primary">{provider.name.charAt(0)}</span>
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
+                        {provider.name}
+                        {provider.is_verified && <CheckCircle2 className="h-5 w-5 text-blue-500 shrink-0" />}
+                      </h1>
+                      {provider.is_featured && (
+                        <Badge className="mt-1.5 bg-primary/10 text-primary border-primary/20">
+                          <Zap className="h-3 w-3 mr-1" /> 推荐中转站
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                  {provider.description && (
+                    <p className="mt-4 text-muted-foreground leading-relaxed">{provider.description}</p>
+                  )}
+                  {provider.advantages && provider.advantages.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mt-3">
+                      {provider.advantages.map((a) => (
+                        <span key={a} className="inline-flex items-center rounded-full bg-green-100 text-green-700 px-3 py-1 text-xs font-medium">{a}</span>
+                      ))}
                     </div>
                   )}
-                  <div className="flex-1 min-w-0">
-                    <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-                      {provider.name}
-                      {provider.is_verified && <CheckCircle2 className="h-5 w-5 text-blue-500 shrink-0" />}
-                    </h1>
-                    {provider.is_featured && (
-                      <Badge className="mt-2 bg-primary/10 text-primary border-primary/20">
-                        <Zap className="h-3 w-3 mr-1" /> 推荐中转站
-                      </Badge>
-                    )}
-                    {provider.description && (
-                      <p className="mt-3 text-muted-foreground leading-relaxed">{provider.description}</p>
-                    )}
-                    <Button size="sm" className="mt-4 gap-1.5" asChild>
+                  <div className="flex gap-3 mt-5">
+                    <Button size="sm" className="gap-1.5" asChild>
                       <a href={provider.website} target="_blank" rel="noopener noreferrer">
                         访问官网 <ExternalLink className="h-3.5 w-3.5" />
                       </a>
                     </Button>
+                    {provider.api_url && (
+                      <Button size="sm" variant="outline" className="gap-1.5" onClick={() => navigator.clipboard.writeText(provider.api_url!)}>
+                        复制 API 地址
+                      </Button>
+                    )}
                   </div>
                 </div>
               </div>
@@ -199,21 +231,84 @@ export default function ProviderDetailPage() {
                   </div>
                 </div>
               )}
+
+              {/* Service Details */}
+              {(provider.api_url || provider.register_type || provider.contact || provider.min_deposit || (provider.payment_methods && provider.payment_methods.length > 0) || provider.free_trial) && (
+                <div className="rounded-xl border border-border bg-card p-6">
+                  <div className="flex items-center gap-2.5 mb-4">
+                    <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center"><Shield className="h-4 w-4 text-primary" /></div>
+                    <h2 className="text-lg font-semibold text-foreground">服务详情</h2>
+                  </div>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    {provider.api_url && (
+                      <div>
+                        <p className="text-xs text-muted-foreground mb-1">API 地址</p>
+                        <code className="text-sm bg-muted px-2 py-1 rounded break-all">{provider.api_url}</code>
+                      </div>
+                    )}
+                    {provider.register_type && (
+                      <div>
+                        <p className="text-xs text-muted-foreground mb-1">注册方式</p>
+                        <p className="text-sm font-medium">{provider.register_type}</p>
+                      </div>
+                    )}
+                    {provider.min_deposit && (
+                      <div>
+                        <p className="text-xs text-muted-foreground mb-1">起充金额</p>
+                        <p className="text-sm font-medium">{provider.min_deposit}</p>
+                      </div>
+                    )}
+                    {provider.contact && (
+                      <div>
+                        <p className="text-xs text-muted-foreground mb-1">客服联系方式</p>
+                        <p className="text-sm font-medium">{provider.contact}</p>
+                      </div>
+                    )}
+                    {provider.free_trial && (
+                      <div>
+                        <p className="text-xs text-muted-foreground mb-1">免费试用</p>
+                        <span className="inline-flex items-center rounded-full bg-green-100 text-green-700 px-2.5 py-0.5 text-xs font-medium">支持</span>
+                      </div>
+                    )}
+                  </div>
+                  {provider.payment_methods && provider.payment_methods.length > 0 && (
+                    <div className="mt-4 pt-4 border-t border-border">
+                      <p className="text-xs text-muted-foreground mb-2">付费方式</p>
+                      <div className="flex flex-wrap gap-2">
+                        {provider.payment_methods.map((method) => (
+                          <span key={method} className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-xs text-primary font-medium">{method}</span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Right Sidebar */}
             <div className="hidden lg:block w-80 shrink-0 sticky top-24 space-y-6">
-              {/* Sponsor Ad */}
-              <div className="rounded-xl border border-border bg-card overflow-hidden">
-                <div className="p-4 bg-gradient-to-br from-primary/10 to-primary/5">
-                  <Badge className="mb-2 bg-primary/20 text-primary border-primary/30">赞助位</Badge>
-                  <h3 className="font-semibold text-foreground mb-1">在此投放广告</h3>
-                  <p className="text-xs text-muted-foreground mb-3">精准触达AI开发者群体，提升品牌曝光</p>
-                  <Button size="sm" variant="outline" className="w-full gap-1">
-                    <Mail className="h-3.5 w-3.5" /> 联系我们
-                  </Button>
-                </div>
-              </div>
+              {/* Sidebar Ads */}
+              {sidebarAds.map((ad) => (
+                <a
+                  key={ad.id}
+                  href={ad.link}
+                  target={ad.link_type === 'external' ? '_blank' : undefined}
+                  rel={ad.link_type === 'external' ? 'noopener noreferrer' : undefined}
+                  className="rounded-xl border border-border bg-card overflow-hidden block hover:border-primary/30 transition-colors"
+                >
+                  <div className="p-4 bg-gradient-to-br from-primary/10 to-primary/5">
+                    <Badge className="mb-2 bg-primary/20 text-primary border-primary/30">赞助位</Badge>
+                    <div className="flex items-center gap-3 mb-2">
+                      {ad.logo_url && <img src={ad.logo_url} alt="" className="w-10 h-10 rounded-lg object-cover shrink-0" />}
+                      <h3 className="font-semibold text-foreground">{ad.title}</h3>
+                    </div>
+                    {ad.description && <p className="text-xs text-muted-foreground mb-3">{ad.description}</p>}
+                    <Button size="sm" variant="outline" className="w-full gap-1">
+                      <ExternalLink className="h-3.5 w-3.5" /> {ad.btn_text || '立即试用'}
+                    </Button>
+                  </div>
+                </a>
+              ))}
 
               {/* Submit Your Site */}
               <div className="rounded-xl border border-border bg-card p-5">
@@ -277,38 +372,33 @@ export default function ProviderDetailPage() {
             </div>
           </div>
 
-          {/* Bottom Recommendations */}
-          <div className="mt-12 p-6 rounded-xl border border-dashed border-border bg-card/50">
-            <div className="flex items-center gap-2 mb-4">
-              <Sparkles className="h-5 w-5 text-primary" />
-              <h3 className="font-semibold text-foreground">热门中转站推荐</h3>
+          {/* Bottom Ads */}
+          {bottomAds.length > 0 && (
+            <div className="mt-12 p-6 rounded-xl border border-dashed border-border bg-card/50">
+              <div className="flex items-center gap-2 mb-4">
+                <Sparkles className="h-5 w-5 text-primary" />
+                <h3 className="font-semibold text-foreground">热门推荐</h3>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                {bottomAds.map((ad) => (
+                  <Link key={ad.id} href={ad.link} className="flex items-center gap-3 p-3 rounded-lg border border-border bg-background hover:border-primary/30 transition-colors">
+                    {ad.logo_url ? (
+                      <img src={ad.logo_url} alt="" className="w-10 h-10 rounded-lg object-cover shrink-0" />
+                    ) : (
+                      <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                        <span className="text-sm font-bold text-primary">{ad.title.charAt(0)}</span>
+                      </div>
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-foreground truncate">{ad.title}</p>
+                      {ad.description && <p className="text-xs text-muted-foreground truncate">{ad.description}</p>}
+                    </div>
+                    <span className="text-xs text-primary font-medium shrink-0">{ad.btn_text || '立即试用'} →</span>
+                  </Link>
+                ))}
+              </div>
             </div>
-            <div className="grid gap-3 sm:grid-cols-2">
-              {[
-                { name: "OpenRouter", desc: "多模型聚合路由，支持100+模型", rating: "4.8" },
-                { name: "OneAPI", desc: "开源API管理面板，自建部署", rating: "4.6" },
-                { name: "API2D", desc: "稳定的GPT API中转服务", rating: "4.5" },
-                { name: "CloseAI", desc: "高可用AI API代理服务", rating: "4.4" },
-              ].map((item) => (
-                <Link key={item.name} href="/providers" className="flex items-center gap-3 p-3 rounded-lg border border-border bg-background hover:border-primary/30 transition-colors">
-                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                    <span className="text-sm font-bold text-primary">{item.name.charAt(0)}</span>
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium text-foreground truncate">{item.name}</p>
-                    <p className="text-xs text-muted-foreground truncate">{item.desc}</p>
-                  </div>
-                  <div className="flex items-center gap-0.5 shrink-0 ml-auto">
-                    <Star className="h-3 w-3 fill-yellow-500 text-yellow-500" />
-                    <span className="text-xs text-muted-foreground">{item.rating}</span>
-                  </div>
-                </Link>
-              ))}
-            </div>
-            <p className="text-xs text-center text-muted-foreground mt-4">
-              <Link href="/providers" className="text-primary hover:underline">查看更多中转站 →</Link>
-            </p>
-          </div>
+          )}
 
           <div className="h-16" />
         </div>

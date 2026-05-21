@@ -12,27 +12,31 @@ import {
   ArrowRight,
   Zap,
 } from "lucide-react";
-import type { Provider } from "@/lib/types";
+import type { Provider, Advertisement } from "@/lib/types";
 
 export function ProviderList() {
   const [providers, setProviders] = useState<Provider[]>([]);
+  const [ads, setAds] = useState<Advertisement[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function fetchProviders() {
+    async function fetchData() {
       try {
-        const res = await fetch("/api/providers");
-        const data = await res.json();
-        if (data.success && data.data) {
-          setProviders(data.data);
-        }
+        const [provRes, adRes] = await Promise.all([
+          fetch("/api/providers"),
+          fetch("/api/advertisements?placement=home_featured"),
+        ])
+        const provData = await provRes.json()
+        const adData = await adRes.json()
+        if (provData.success && provData.data) setProviders(provData.data)
+        if (adData.success && adData.data) setAds(adData.data)
       } catch (error) {
         console.error("获取数据失败:", error);
       } finally {
         setLoading(false);
       }
     }
-    fetchProviders();
+    fetchData();
   }, []);
 
   if (loading) {
@@ -61,13 +65,16 @@ export function ProviderList() {
         </div>
 
         {/* Featured */}
-        {featured.length > 0 && (
+        {(featured.length > 0 || ads.length > 0) && (
           <div className="mb-12">
             <div className="flex items-center gap-2 mb-6">
               <Zap className="h-5 w-5 text-primary" />
               <h3 className="text-lg font-semibold text-foreground">推荐中转站</h3>
             </div>
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              {ads.map((ad) => (
+                <AdCard key={ad.id} ad={ad} />
+              ))}
               {featured.map((provider) => (
                 <ProviderCard key={provider.id} provider={provider} featured />
               ))}
@@ -115,8 +122,7 @@ function ProviderCard({ provider, featured }: { provider: Provider; featured?: b
             src={provider.screenshot_url}
             alt={provider.name}
             fill
-            className="object-cover object-top transition-transform group-hover:scale-105"
-            unoptimized
+            className="object-cover transition-transform group-hover:scale-105"
           />
         ) : (
           <div className="w-full h-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
@@ -134,17 +140,14 @@ function ProviderCard({ provider, featured }: { provider: Provider; featured?: b
         )}
 
         {/* Hover overlay */}
-        <a
-          href={provider.website}
-          target="_blank"
-          rel="noopener noreferrer"
-          onClick={(e) => e.stopPropagation()}
-          className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity"
+        <span
+          onClick={(e) => { e.stopPropagation(); window.open(provider.website, '_blank', 'noopener,noreferrer') }}
+          className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
         >
           <span className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-white/90 text-sm font-medium text-foreground shadow">
             访问官网 <ExternalLink className="h-3.5 w-3.5" />
           </span>
-        </a>
+        </span>
 
         {/* Features on image */}
         {(provider.features || []).length > 0 && (
@@ -160,7 +163,7 @@ function ProviderCard({ provider, featured }: { provider: Provider; featured?: b
         {/* Name + Logo */}
         <div className="flex items-center gap-3 mb-3">
           {provider.logo_url ? (
-            <Image src={provider.logo_url} alt="" width={36} height={36} className="rounded-lg shrink-0" unoptimized />
+            <Image src={provider.logo_url} alt="" width={36} height={36} className="rounded-lg shrink-0" />
           ) : (
             <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
               <span className="text-sm font-bold text-primary">{provider.name.charAt(0)}</span>
@@ -171,7 +174,7 @@ function ProviderCard({ provider, featured }: { provider: Provider; featured?: b
               {provider.name}
               {provider.is_verified && <CheckCircle2 className="h-4 w-4 text-blue-500 shrink-0" />}
             </h3>
-            <a href={provider.website} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="inline-flex items-center gap-1 text-xs text-primary hover:underline shrink-0">访问官网<ExternalLink className="h-3 w-3" /></a>
+            <span onClick={(e) => { e.stopPropagation(); window.open(provider.website, '_blank', 'noopener,noreferrer') }} className="inline-flex items-center gap-1 text-xs text-primary hover:underline shrink-0 cursor-pointer">访问官网<ExternalLink className="h-3 w-3" /></span>
           </div>
         </div>
 
@@ -195,4 +198,42 @@ function ProviderCard({ provider, featured }: { provider: Provider; featured?: b
       </div>
     </Link>
   );
+}
+
+function AdCard({ ad }: { ad: Advertisement }) {
+  const isExternal = ad.link_type === 'external'
+  const Wrapper = ({ children }: { children: React.ReactNode }) =>
+    isExternal ? (
+      <a href={ad.link} target="_blank" rel="noopener noreferrer" className="group relative overflow-hidden rounded-xl border border-primary/30 bg-card transition-all hover:shadow-lg hover:border-primary/50 block">
+        {children}
+      </a>
+    ) : (
+      <Link href={ad.link} className="group relative overflow-hidden rounded-xl border border-primary/30 bg-card transition-all hover:shadow-lg hover:border-primary/50 block">
+        {children}
+      </Link>
+    )
+
+  return (
+    <Wrapper>
+      <div className="p-5">
+        <div className="flex items-center gap-2 mb-3">
+          <Badge className="bg-primary/10 text-primary border-primary/20 text-xs">赞助</Badge>
+        </div>
+        <div className="flex items-center gap-3 mb-3">
+          {ad.logo_url ? (
+            <img src={ad.logo_url} alt="" className="w-10 h-10 rounded-lg object-cover shrink-0" />
+          ) : (
+            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+              <span className="text-sm font-bold text-primary">{ad.title.charAt(0)}</span>
+            </div>
+          )}
+          <h3 className="font-semibold text-card-foreground truncate">{ad.title}</h3>
+        </div>
+        {ad.description && <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed mb-4">{ad.description}</p>}
+        <span className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium">
+          {ad.btn_text || '立即试用'} <ExternalLink className="h-3.5 w-3.5" />
+        </span>
+      </div>
+    </Wrapper>
+  )
 }

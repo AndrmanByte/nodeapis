@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/select"
 import { MessageSquarePlus, Loader2 } from "lucide-react"
 import { SUGGESTION_CATEGORIES } from "@/lib/types"
+import { toast } from "sonner"
 
 interface SuggestionDialogProps {
   children?: React.ReactNode
@@ -38,7 +39,7 @@ export function SuggestionDialog({ children }: SuggestionDialogProps) {
 
   const handleSubmit = async () => {
     if (!title.trim() || !content.trim()) {
-      alert("请填写标题和内容")
+      toast.error("请填写标题和内容")
       return
     }
 
@@ -61,10 +62,10 @@ export function SuggestionDialog({ children }: SuggestionDialogProps) {
           setCategory("general")
         }, 2000)
       } else {
-        alert(data.error || "提交失败")
+        toast.error(data.error || "提交失败")
       }
     } catch {
-      alert("提交失败，请稍后重试")
+      toast.error("提交失败，请稍后重试")
     } finally {
       setLoading(false)
     }

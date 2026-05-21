@@ -10,6 +10,7 @@ import {
   Calendar, Coins, TrendingUp, Sparkles, Check
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { toast } from 'sonner'
 import type { Level } from '@/lib/types'
 
 const ICON_MAP: Record<string, React.ReactNode> = {
@@ -96,14 +97,15 @@ export function CheckinCard() {
       if (json.success) {
         setEarnedPoints(json.data.points_earned)
         setShowSuccess(true)
+        toast.success(`签到成功！获得 ${json.data.points_earned} 积分`)
         setTimeout(() => setShowSuccess(false), 3000)
         fetchData()
       } else {
-        alert(json.error)
+        toast.error(json.error)
       }
     } catch (error) {
       console.error('Checkin failed:', error)
-      alert('签到失败')
+      toast.error('签到失败')
     } finally {
       setChecking(false)
     }

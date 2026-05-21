@@ -418,16 +418,6 @@ export default function ProfilePage() {
                 </CardContent>
               </Card>
 
-              <Card className="border-destructive/50">
-                <CardHeader>
-                  <CardTitle className="text-lg text-destructive">危险操作</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <Button variant="destructive" className="w-full">
-                    删除账号
-                  </Button>
-                </CardContent>
-              </Card>
             </TabsContent>
           </Tabs>
         </div>

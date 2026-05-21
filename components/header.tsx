@@ -63,7 +63,7 @@ export function Header() {
             href="/providers"
             className="text-sm text-muted-foreground transition-colors hover:text-foreground"
           >
-            中转站列表
+            中转站
           </Link>
           <Link
             href="/pricing"
@@ -117,11 +117,11 @@ export function Header() {
         <div className="border-t border-border bg-background px-4 py-4 md:hidden">
           <nav className="flex flex-col gap-4">
             <Link
-              href="/#providers"
+              href="/providers"
               className="text-sm text-muted-foreground"
               onClick={() => setMobileMenuOpen(false)}
             >
-              中转站列表
+              中转站
             </Link>
             <Link
               href="/pricing"

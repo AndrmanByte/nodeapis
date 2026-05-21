@@ -46,11 +46,19 @@ export default function SubmitPage() {
   const [formData, setFormData] = useState({
     name: "",
     website: "",
+    api_url: "",
     description: "",
     logo_url: "",
     screenshot_url: "",
     contact_email: "",
+    contact: "",
+    register_type: "开放注册",
+    min_deposit: "",
   })
+  const [paymentMethods, setPaymentMethods] = useState<string[]>([])
+  const [freeTrial, setFreeTrial] = useState(false)
+  const [advantages, setAdvantages] = useState<string[]>([])
+  const [advantageInput, setAdvantageInput] = useState("")
 
   const [models, setModels] = useState<ModelPricing[]>([
     { model: "", price: "", multiplier: "1" },
@@ -102,7 +110,7 @@ export default function SubmitPage() {
       const res = await fetch("/api/submissions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...formData, supported_vendors: selectedVendors, supported_models: pricing.map((p) => p.model), pricing, features: customTags }),
+        body: JSON.stringify({ ...formData, supported_vendors: selectedVendors, supported_models: pricing.map((p) => p.model), pricing, features: customTags, payment_methods: paymentMethods, free_trial: freeTrial, advantages }),
       })
       if (res.ok) { setStatus("success") } else { const data = await res.json(); setStatus("error"); setErrorMsg(data.error || "提交失败") }
     } catch { setStatus("error"); setErrorMsg("网络错误") } finally { setLoading(false) }
@@ -152,6 +160,23 @@ export default function SubmitPage() {
                     <div className="space-y-2">
                       <label className="text-sm font-medium text-foreground">简介 <span className="text-destructive">*</span></label>
                       <Textarea placeholder="简单描述你的服务特点" value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} required rows={3} />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-foreground">优势亮点 <span className="text-muted-foreground font-normal">（最多3个，每个15字）</span></label>
+                      <div className="flex gap-2">
+                        <Input placeholder="如：全网最低价" value={advantageInput} onChange={(e) => setAdvantageInput(e.target.value.slice(0, 15))} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); const v = advantageInput.trim(); if (v && advantages.length < 3 && !advantages.includes(v)) { setAdvantages([...advantages, v]); setAdvantageInput("") }}}} className="h-10" />
+                        <Button type="button" variant="outline" onClick={() => { const v = advantageInput.trim(); if (v && advantages.length < 3 && !advantages.includes(v)) { setAdvantages([...advantages, v]); setAdvantageInput("") }}} disabled={!advantageInput.trim() || advantages.length >= 3}>添加</Button>
+                      </div>
+                      {advantages.length > 0 && (
+                        <div className="flex flex-wrap gap-2">
+                          {advantages.map((a) => (
+                            <span key={a} className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm bg-green-100 text-green-700 rounded-full">
+                              {a}
+                              <button type="button" onClick={() => setAdvantages(advantages.filter(x => x !== a))} className="hover:text-destructive"><X className="h-3.5 w-3.5" /></button>
+                            </span>
+                          ))}
+                        </div>
+                      )}
                     </div>
                     <div className="grid gap-6 sm:grid-cols-2">
                       <ImageUpload
@@ -252,6 +277,55 @@ export default function SubmitPage() {
                     <div className="space-y-2">
                       <label className="text-sm font-medium text-foreground">联系邮箱 <span className="text-destructive">*</span></label>
                       <Input type="email" placeholder="your@email.com" value={formData.contact_email} onChange={(e) => setFormData({ ...formData, contact_email: e.target.value })} required className="h-11" />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-foreground">客服联系方式</label>
+                      <Input placeholder="如：Telegram @xxx、QQ群 123456" value={formData.contact} onChange={(e) => setFormData({ ...formData, contact: e.target.value })} className="h-11" />
+                    </div>
+                  </div>
+
+                  {/* Service Details */}
+                  <div className="space-y-6">
+                    <SectionHeader icon={<Shield className="h-4 w-4 text-primary" />} title="服务详情" desc="补充中转站的服务信息" />
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-foreground">API 地址</label>
+                      <Input type="url" placeholder="https://api.example.com/v1" value={formData.api_url} onChange={(e) => setFormData({ ...formData, api_url: e.target.value })} className="h-11" />
+                    </div>
+                    <div className="grid gap-6 sm:grid-cols-2">
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-foreground">注册方式</label>
+                        <select value={formData.register_type} onChange={(e) => setFormData({ ...formData, register_type: e.target.value })} className="w-full h-11 rounded-md border border-border bg-background px-3 text-sm">
+                          <option value="开放注册">开放注册</option>
+                          <option value="邀请码">邀请码</option>
+                          <option value="需审核">需审核</option>
+                        </select>
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-foreground">起充金额</label>
+                        <Input placeholder="如：¥1、$5" value={formData.min_deposit} onChange={(e) => setFormData({ ...formData, min_deposit: e.target.value })} className="h-11" />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-foreground">付费方式</label>
+                      <div className="flex flex-wrap gap-3">
+                        {['支付宝', '微信', 'USDT', 'PayPal', '银行卡'].map((method) => {
+                          const selected = paymentMethods.includes(method)
+                          return (
+                            <button
+                              key={method}
+                              type="button"
+                              onClick={() => setPaymentMethods(selected ? paymentMethods.filter(m => m !== method) : [...paymentMethods, method])}
+                              className={`px-4 py-2 rounded-lg border text-sm font-medium transition-colors ${selected ? 'bg-primary text-primary-foreground border-primary' : 'bg-card border-border hover:border-primary/50 text-foreground'}`}
+                            >
+                              {method}
+                            </button>
+                          )
+                        })}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <input type="checkbox" id="free_trial" checked={freeTrial} onChange={(e) => setFreeTrial(e.target.checked)} className="w-4 h-4 rounded border-border" />
+                      <label htmlFor="free_trial" className="text-sm font-medium text-foreground">提供免费试用 / 免费额度</label>
                     </div>
                   </div>
 

@@ -11,6 +11,7 @@ import type { LotteryEvent, LotteryParticipant, User, Level } from '@/lib/types'
 import { Gift, Users, Clock, Store, ArrowLeft, Trophy, Check, Coins, Sparkles } from "lucide-react"
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
+import { toast } from 'sonner'
 
 interface LotteryEventWithProvider extends LotteryEvent {
   provider?: {
@@ -109,7 +110,7 @@ export default function LotteryDetailPage() {
 
     const actualCost = getActualCost()
     if (actualCost > 0 && userPoints < actualCost) {
-      alert(`积分不足！需要 ${actualCost} 积分，当前只有 ${userPoints} 积分`)
+      toast.error(`积分不足！需要 ${actualCost} 积分，当前只有 ${userPoints} 积分`)
       return
     }
 
@@ -124,7 +125,7 @@ export default function LotteryDetailPage() {
         setUserPoints(data.data.remaining_points)
         loadEvent()
       } else {
-        alert(data.error)
+        toast.error(data.error)
       }
     } catch (error) {
       console.error('Participate error:', error)

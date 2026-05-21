@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
 import { createClient } from '@/lib/supabase/client'
+import { toast } from 'sonner'
 import type { LotteryEvent } from '@/lib/types'
 
 interface LotteryEventWithProvider extends LotteryEvent {
@@ -71,11 +72,11 @@ export function LotterySection() {
         loadEvents() // Refresh counts
         setSelectedEvent(null)
       } else {
-        alert(data.error || '参与失败，请稍后再试')
+        toast.error(data.error || '参与失败，请稍后再试')
       }
     } catch (error) {
       console.error('[v0] Failed to join lottery:', error)
-      alert('参与失败，请稍后再试')
+      toast.error('参与失败，请稍后再试')
     } finally {
       setParticipating(false)
     }
