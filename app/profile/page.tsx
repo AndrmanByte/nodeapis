@@ -26,6 +26,7 @@ import {
   ArrowLeft
 } from "lucide-react"
 import Link from 'next/link'
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
 
 export default function ProfilePage() {
   const router = useRouter()
@@ -37,6 +38,7 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true)
   const [editing, setEditing] = useState(false)
   const [username, setUsername] = useState('')
+  const [confirmDialog, setConfirmDialog] = useState<{ open: boolean; title: string; description: string; onConfirm: () => void }>({ open: false, title: '', description: '', onConfirm: () => {} })
 
   useEffect(() => {
     checkAuth()
@@ -101,16 +103,17 @@ export default function ProfilePage() {
   }
 
   const handleDeleteProvider = async (id: string) => {
-    if (!confirm('确定要删除这个店铺吗？')) return
-    try {
-      const res = await fetch(`/api/user/providers/${id}`, { method: 'DELETE' })
-      const data = await res.json()
-      if (data.success) {
-        setProviders(providers.filter(p => p.id !== id))
+    setConfirmDialog({ open: true, title: '删除店铺', description: '确定要删除这个店铺吗？此操作不可撤销。', onConfirm: async () => {
+      try {
+        const res = await fetch(`/api/user/providers/${id}`, { method: 'DELETE' })
+        const data = await res.json()
+        if (data.success) {
+          setProviders(providers.filter(p => p.id !== id))
+        }
+      } catch (error) {
+        console.error('Delete provider error:', error)
       }
-    } catch (error) {
-      console.error('Delete provider error:', error)
-    }
+    }})
   }
 
   const handleMarkNotificationRead = async (id: string) => {
@@ -422,6 +425,20 @@ export default function ProfilePage() {
           </Tabs>
         </div>
       </main>
+
+      {/* 统一确认弹窗 */}
+      <AlertDialog open={confirmDialog.open} onOpenChange={(open) => setConfirmDialog(prev => ({ ...prev, open }))}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{confirmDialog.title}</AlertDialogTitle>
+            <AlertDialogDescription>{confirmDialog.description}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>取消</AlertDialogCancel>
+            <AlertDialogAction onClick={() => { confirmDialog.onConfirm(); setConfirmDialog(prev => ({ ...prev, open: false })) }}>确认</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

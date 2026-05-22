@@ -390,7 +390,7 @@ export default function SubmitPage() {
                       <img src="/icon.svg" alt="NodeAPIs" width={36} height={36} className="rounded-lg shrink-0" />
                       <div className="min-w-0">
                         <p className="text-sm font-medium text-foreground">NodeAPIs</p>
-                        <p className="text-xs text-muted-foreground">AI API 中转站导航</p>
+                        <p className="text-xs text-muted-foreground">AI API 中转聚合平台</p>
                       </div>
                     </div>
                   </div>

@@ -13,7 +13,7 @@ export default function PrivacyPage() {
           <div className="prose prose-sm max-w-none space-y-6 text-muted-foreground">
             <section>
               <h2 className="text-lg font-semibold text-foreground">1. 信息收集</h2>
-              <p>我们通过第三方登录（GitHub OAuth）收集您的基本信息，包括邮箱地址和用户名。这些信息仅用于账户识别和站内通知。</p>
+              <p>我们通过第三方登录收集您的基本信息，包括邮箱地址和用户名。这些信息仅用于账户识别和站内通知。</p>
             </section>
 
             <section>

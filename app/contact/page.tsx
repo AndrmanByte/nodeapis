@@ -1,6 +1,6 @@
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
-import { Mail, Send, Github, MessageSquarePlus } from "lucide-react"
+import { Mail, Send, MessageSquarePlus } from "lucide-react"
 
 export default function ContactPage() {
   return (
@@ -29,16 +29,6 @@ export default function ContactPage() {
               <h3 className="font-semibold text-foreground">Telegram</h3>
               <a href="https://t.me/nodeapis" target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline">
                 @nodeapis
-              </a>
-            </div>
-
-            <div className="rounded-xl border border-border bg-card p-6 space-y-3">
-              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                <Github className="h-5 w-5 text-primary" />
-              </div>
-              <h3 className="font-semibold text-foreground">GitHub</h3>
-              <a href="https://github.com/nodeapis" target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline">
-                github.com/nodeapis
               </a>
             </div>
 

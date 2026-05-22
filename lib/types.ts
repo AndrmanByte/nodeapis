@@ -246,6 +246,7 @@ export interface Advertisement {
   btn_text: string
   start_time?: string
   end_time?: string
+  provider_id?: string
   created_at: string
 }
 

@@ -21,7 +21,7 @@ async function umamiRequest(endpoint: string, params?: Record<string, string>) {
 
   const res = await fetch(url.toString(), {
     headers: {
-      'x-umami-api-key': UMAMI_API_TOKEN,
+      'Authorization': `Bearer ${UMAMI_API_TOKEN}`,
       'Content-Type': 'application/json',
     },
     cache: 'no-store'

@@ -141,7 +141,7 @@ export function SubmitDialog({ children }: SubmitDialogProps) {
       <DialogTrigger asChild>
         {children}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>提交你的中转站</DialogTitle>
           <DialogDescription>

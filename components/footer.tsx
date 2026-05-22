@@ -27,7 +27,7 @@ export function Footer() {
                   NODE<span className="text-primary">APIS</span>
                 </span>
                 <span className="text-[9px] tracking-[0.5em] text-muted-foreground/60 mt-0.5" style={{ fontFamily: "'Courier New', Consolas, monospace" }}>
-                  AI API 中转平台
+                  AI API 中转聚合
                 </span>
               </div>
             </Link>

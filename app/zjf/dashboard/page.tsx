@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
 import { createClient } from '@/lib/supabase/client'
 import { AnalyticsDashboard } from '@/components/analytics-dashboard'
 import { ImageUpload } from '@/components/image-upload'
@@ -51,7 +52,10 @@ export default function AdminDashboard() {
   const [advertisements, setAdvertisements] = useState<Advertisement[]>([])
   const [adDialogOpen, setAdDialogOpen] = useState(false)
   const [editingAd, setEditingAd] = useState<Advertisement | null>(null)
+  const [confirmDialog, setConfirmDialog] = useState<{ open: boolean; title: string; description: string; onConfirm: () => void }>({ open: false, title: '', description: '', onConfirm: () => {} })
   const [adLogoUrl, setAdLogoUrl] = useState("")
+  const [adPlacement, setAdPlacement] = useState('home_top')
+  const [adProviderId, setAdProviderId] = useState('')
 
   const [providerSearch, setProviderSearch] = useState('')
   const [userSearch, setUserSearch] = useState('')
@@ -212,10 +216,11 @@ export default function AdminDashboard() {
   }
 
   const handleDeleteProvider = async (id: string) => {
-    if (!confirm('确定要删除这个中转站吗？')) return
-    const res = await fetch(`/api/admin/providers/${id}`, { method: 'DELETE' })
-    const data = await res.json()
-    if (data.success) loadProviders()
+    setConfirmDialog({ open: true, title: '删除中转站', description: '确定要删除这个中转站吗？此操作不可撤销。', onConfirm: async () => {
+      const res = await fetch(`/api/admin/providers/${id}`, { method: 'DELETE' })
+      const data = await res.json()
+      if (data.success) loadProviders()
+    }})
   }
 
   const handleUpdateUser = async (id: string, updates: Partial<User>) => {
@@ -229,10 +234,11 @@ export default function AdminDashboard() {
   }
 
   const handleDeleteUser = async (id: string) => {
-    if (!confirm('确定要删除这个用户吗？')) return
-    const res = await fetch(`/api/admin/users/${id}`, { method: 'DELETE' })
-    const data = await res.json()
-    if (data.success) loadUsers()
+    setConfirmDialog({ open: true, title: '删除用户', description: '确定要删除这个用户吗？此操作不可撤销。', onConfirm: async () => {
+      const res = await fetch(`/api/admin/users/${id}`, { method: 'DELETE' })
+      const data = await res.json()
+      if (data.success) loadUsers()
+    }})
   }
 
   const handleSaveLottery = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -270,22 +276,24 @@ export default function AdminDashboard() {
   }
 
   const handleDeleteLottery = async (id: string) => {
-    if (!confirm('确定要删除这个抽奖活动吗？')) return
-    const res = await fetch(`/api/admin/lottery/${id}`, { method: 'DELETE' })
-    const data = await res.json()
-    if (data.success) loadLotteryEvents()
+    setConfirmDialog({ open: true, title: '删除抽奖活动', description: '确定要删除这个抽奖活动吗？此操作不可撤销。', onConfirm: async () => {
+      const res = await fetch(`/api/admin/lottery/${id}`, { method: 'DELETE' })
+      const data = await res.json()
+      if (data.success) loadLotteryEvents()
+    }})
   }
 
   const handleDrawLottery = async (id: string, title: string) => {
-    if (!confirm(`确定要对「${title}」进行开奖吗？开奖后不可撤销。`)) return
-    const res = await fetch(`/api/admin/lottery/${id}/draw`, { method: 'POST' })
-    const data = await res.json()
-    if (data.success) {
-      toast.success(`开奖成功！共 ${data.data.winner_count} 人中奖，${data.data.total_participants} 人参与`)
-      loadLotteryEvents()
-    } else {
-      toast.error(data.error || '开奖失败')
-    }
+    setConfirmDialog({ open: true, title: '确认开奖', description: `确定要对「${title}」进行开奖吗？开奖后不可撤销。`, onConfirm: async () => {
+      const res = await fetch(`/api/admin/lottery/${id}/draw`, { method: 'POST' })
+      const data = await res.json()
+      if (data.success) {
+        toast.success(`开奖成功！共 ${data.data.winner_count} 人中奖，${data.data.total_participants} 人参与`)
+        loadLotteryEvents()
+      } else {
+        toast.error(data.error || '开奖失败')
+      }
+    }})
   }
 
   const handleSaveAnnouncement = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -318,10 +326,11 @@ export default function AdminDashboard() {
   }
 
   const handleDeleteAnnouncement = async (id: string) => {
-    if (!confirm('确定要删除这个公告吗？')) return
-    const res = await fetch(`/api/announcements/${id}`, { method: 'DELETE' })
-    const data = await res.json()
-    if (data.success) loadAnnouncements()
+    setConfirmDialog({ open: true, title: '删除公告', description: '确定要删除这个公告吗？此操作不可撤销。', onConfirm: async () => {
+      const res = await fetch(`/api/announcements/${id}`, { method: 'DELETE' })
+      const data = await res.json()
+      if (data.success) loadAnnouncements()
+    }})
   }
 
   const handleReviewSubmission = async (id: string, status: 'approved' | 'rejected', review_notes?: string) => {
@@ -380,10 +389,11 @@ export default function AdminDashboard() {
   }
 
   const handleDeleteSuggestion = async (id: string) => {
-    if (!confirm('确定要删除这条建议吗？')) return
-    const res = await fetch(`/api/admin/suggestions/${id}`, { method: 'DELETE' })
-    const data = await res.json()
-    if (data.success) loadSuggestions()
+    setConfirmDialog({ open: true, title: '删除建议', description: '确定要删除这条建议吗？此操作不可撤销。', onConfirm: async () => {
+      const res = await fetch(`/api/admin/suggestions/${id}`, { method: 'DELETE' })
+      const data = await res.json()
+      if (data.success) loadSuggestions()
+    }})
   }
 
   const handleSaveModel = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -417,10 +427,11 @@ export default function AdminDashboard() {
   }
 
   const handleDeleteModel = async (id: string) => {
-    if (!confirm('确定要删除这个模型吗？')) return
-    const res = await fetch(`/api/admin/models/${id}`, { method: 'DELETE' })
-    const data = await res.json()
-    if (data.success) loadModels()
+    setConfirmDialog({ open: true, title: '删除模型', description: '确定要删除这个模型吗？此操作不可撤销。', onConfirm: async () => {
+      const res = await fetch(`/api/admin/models/${id}`, { method: 'DELETE' })
+      const data = await res.json()
+      if (data.success) loadModels()
+    }})
   }
 
   const handleSaveVendor = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -451,10 +462,11 @@ export default function AdminDashboard() {
   }
 
   const handleDeleteVendor = async (id: string) => {
-    if (!confirm('确定要删除这个厂商吗？')) return
-    const res = await fetch(`/api/admin/vendors/${id}`, { method: 'DELETE' })
-    const data = await res.json()
-    if (data.success) loadVendors()
+    setConfirmDialog({ open: true, title: '删除厂商', description: '确定要删除这个厂商吗？此操作不可撤销。', onConfirm: async () => {
+      const res = await fetch(`/api/admin/vendors/${id}`, { method: 'DELETE' })
+      const data = await res.json()
+      if (data.success) loadVendors()
+    }})
   }
 
   const handleSaveAdvertisement = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -462,18 +474,23 @@ export default function AdminDashboard() {
     const form = e.currentTarget
     const formData = new FormData(form)
 
-    const adData = {
-      title: formData.get('title') as string,
-      description: formData.get('description') as string,
-      logo_url: adLogoUrl,
-      link: formData.get('link') as string,
-      link_type: formData.get('link_type') as string,
-      placement: formData.get('placement') as string,
+    const placement = formData.get('placement') as string
+    const isProviderAd = ['home_featured', 'detail_sidebar', 'detail_bottom'].includes(placement)
+    const selectedProvider = isProviderAd ? providers.find(p => p.id === adProviderId) : null
+
+    const adData: Record<string, any> = {
+      title: selectedProvider ? selectedProvider.name : (formData.get('title') as string),
+      description: selectedProvider ? (selectedProvider.description || '') : (formData.get('description') as string),
+      logo_url: selectedProvider ? (selectedProvider.logo_url || '') : adLogoUrl,
+      link: selectedProvider ? `/providers/${selectedProvider.id}` : (formData.get('link') as string),
+      link_type: isProviderAd ? 'internal' : (formData.get('link_type') as string),
+      placement,
       sort_order: parseInt(formData.get('sort_order') as string) || 0,
       is_active: (formData.get('is_active') as string) === 'on',
-      btn_text: formData.get('btn_text') as string || '立即试用',
-      start_time: formData.get('start_time') as string || null,
-      end_time: formData.get('end_time') as string || null,
+      btn_text: '查看详情',
+      start_time: null,
+      end_time: null,
+      provider_id: isProviderAd ? adProviderId || null : null,
     }
 
     const url = editingAd ? `/api/admin/advertisements/${editingAd.id}` : '/api/admin/advertisements'
@@ -494,10 +511,11 @@ export default function AdminDashboard() {
   }
 
   const handleDeleteAdvertisement = async (id: string) => {
-    if (!confirm('确定要删除这个广告吗？')) return
-    const res = await fetch(`/api/admin/advertisements/${id}`, { method: 'DELETE' })
-    const data = await res.json()
-    if (data.success) loadAdvertisements()
+    setConfirmDialog({ open: true, title: '删除广告', description: '确定要删除这个广告吗？此操作不可撤销。', onConfirm: async () => {
+      const res = await fetch(`/api/admin/advertisements/${id}`, { method: 'DELETE' })
+      const data = await res.json()
+      if (data.success) loadAdvertisements()
+    }})
   }
 
   const filteredProviders = providers.filter(p => p.name.toLowerCase().includes(providerSearch.toLowerCase()))
@@ -566,7 +584,7 @@ export default function AdminDashboard() {
                     <DialogTrigger asChild>
                       <Button onClick={() => { setEditingProvider(null); setProviderLogoUrl(""); setProviderScreenshotUrl("") }} className="gap-2"><Plus className="h-4 w-4" />添加中转站</Button>
                     </DialogTrigger>
-                    <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                    <DialogContent className="max-w-2xl">
                       <DialogHeader><DialogTitle>{editingProvider ? '编辑中转站' : '添加中转站'}</DialogTitle></DialogHeader>
                       <form onSubmit={handleSaveProvider} className="space-y-4">
                         <div className="grid gap-4 md:grid-cols-2">
@@ -662,7 +680,7 @@ export default function AdminDashboard() {
                           <Badge variant="outline" className="gap-1">
                             Lv.{user.level || 1}
                           </Badge>
-                          {!user.is_active && <Badge variant="outline" className="text-red-500">已禁用</Badge>}
+                          {user.is_active === false && <Badge variant="outline" className="text-red-500">已禁用</Badge>}
                         </div>
                         <p className="text-sm text-muted-foreground">{user.email}</p>
                         <div className="flex items-center gap-4 text-xs text-muted-foreground">
@@ -687,7 +705,7 @@ export default function AdminDashboard() {
                             <SelectItem value="admin">管理员</SelectItem>
                           </SelectContent>
                         </Select>
-                        <Button size="sm" variant={user.is_active ? 'outline' : 'default'} onClick={() => handleUpdateUser(user.id, { is_active: !user.is_active })}>{user.is_active ? '禁用' : '启用'}</Button>
+                        <Button size="sm" variant={user.is_active === false ? 'default' : 'outline'} onClick={() => handleUpdateUser(user.id, { is_active: user.is_active === false })}>{user.is_active === false ? '启用' : '禁用'}</Button>
                         <Button size="sm" variant="destructive" onClick={() => handleDeleteUser(user.id)}><Trash2 className="h-4 w-4" /></Button>
                       </div>
                     </div>
@@ -772,7 +790,7 @@ export default function AdminDashboard() {
                     <DialogTrigger asChild>
                       <Button onClick={() => setEditingLottery(null)} className="gap-2"><Plus className="h-4 w-4" />创建活动</Button>
                     </DialogTrigger>
-                    <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                    <DialogContent className="max-w-2xl">
                       <DialogHeader><DialogTitle>{editingLottery ? '编辑活动' : '创建活动'}</DialogTitle></DialogHeader>
                       <form onSubmit={handleSaveLottery} className="space-y-4">
                         <div className="space-y-2">
@@ -1149,90 +1167,279 @@ export default function AdminDashboard() {
 
           {/* 广告管理 */}
           {activeSection === 'ads' &&
-            <Card className="border-border/50">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle>广告管理</CardTitle>
-                  <Dialog open={adDialogOpen} onOpenChange={setAdDialogOpen}>
-                    <DialogTrigger asChild>
-                      <Button onClick={() => { setEditingAd(null); setAdLogoUrl("") }} className="gap-2"><Plus className="h-4 w-4" />添加广告</Button>
-                    </DialogTrigger>
-                    <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
-                      <DialogHeader><DialogTitle>{editingAd ? '编辑广告' : '添加广告'}</DialogTitle></DialogHeader>
-                      <form onSubmit={handleSaveAdvertisement} className="space-y-4">
-                        <div className="grid gap-4 md:grid-cols-2">
-                          <div className="space-y-2"><Label htmlFor="ad_title">标题</Label><Input id="ad_title" name="title" defaultValue={editingAd?.title} placeholder="广告标题" required /></div>
-                          <div className="space-y-2"><Label htmlFor="ad_btn_text">按钮文字</Label><Input id="ad_btn_text" name="btn_text" defaultValue={editingAd?.btn_text || '立即试用'} placeholder="立即试用" /></div>
-                        </div>
-                        <div className="space-y-2"><Label htmlFor="ad_desc">描述</Label><Textarea id="ad_desc" name="description" defaultValue={editingAd?.description} placeholder="广告描述" rows={2} /></div>
-                        <div className="space-y-2"><Label>Logo 图片</Label><ImageUpload value={adLogoUrl || editingAd?.logo_url || ""} onChange={setAdLogoUrl} label="" aspect="square" /></div>
-                        <div className="grid gap-4 md:grid-cols-2">
-                          <div className="space-y-2"><Label htmlFor="ad_link">链接</Label><Input id="ad_link" name="link" defaultValue={editingAd?.link} placeholder="https://..." required /></div>
-                          <div className="space-y-2">
-                            <Label htmlFor="ad_link_type">链接类型</Label>
-                            <Select name="link_type" defaultValue={editingAd?.link_type || 'external'}>
-                              <SelectTrigger><SelectValue /></SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="internal">站内链接</SelectItem>
-                                <SelectItem value="external">外部链接</SelectItem>
-                              </SelectContent>
-                            </Select>
+            <div className="space-y-6">
+              {/* 首页顶部广告 */}
+              <Card className="border-border/50">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-base">首页顶部广告</CardTitle>
+                    <Dialog open={adDialogOpen && adPlacement === 'home_top'} onOpenChange={(open) => { if (open) setAdPlacement('home_top'); setAdDialogOpen(open) }}>
+                      <DialogTrigger asChild>
+                        <Button size="sm" onClick={() => { setEditingAd(null); setAdLogoUrl(""); setAdProviderId("") }} className="gap-2"><Plus className="h-4 w-4" />添加</Button>
+                      </DialogTrigger>
+                      <DialogContent className="max-w-2xl">
+                        <DialogHeader><DialogTitle>{editingAd ? '编辑广告' : '添加首页顶部广告'}</DialogTitle></DialogHeader>
+                        <form onSubmit={handleSaveAdvertisement} className="space-y-4">
+                          <input type="hidden" name="placement" value="home_top" />
+                          <div className="grid gap-4 md:grid-cols-2">
+                            <div className="space-y-2"><Label htmlFor="ad_title">标题</Label><Input id="ad_title" name="title" defaultValue={editingAd?.title} placeholder="广告标题" required /></div>
+                            <div className="space-y-2"><Label htmlFor="ad_btn_text">按钮文字</Label><Input id="ad_btn_text" name="btn_text" defaultValue={editingAd?.btn_text || '立即试用'} placeholder="立即试用" /></div>
                           </div>
-                        </div>
-                        <div className="grid gap-4 md:grid-cols-3">
-                          <div className="space-y-2">
-                            <Label htmlFor="ad_placement">广告位</Label>
-                            <Select name="placement" defaultValue={editingAd?.placement || 'home_top'}>
-                              <SelectTrigger><SelectValue /></SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="home_top">首页顶部</SelectItem>
-                                <SelectItem value="home_featured">首页推荐</SelectItem>
-                                <SelectItem value="detail_sidebar">详情侧边栏</SelectItem>
-                                <SelectItem value="detail_bottom">详情底部</SelectItem>
-                              </SelectContent>
-                            </Select>
+                          <div className="space-y-2"><Label htmlFor="ad_desc">描述</Label><Textarea id="ad_desc" name="description" defaultValue={editingAd?.description} placeholder="广告描述" rows={2} /></div>
+                          <div className="space-y-2"><Label>Logo 图片</Label><ImageUpload value={adLogoUrl || editingAd?.logo_url || ""} onChange={setAdLogoUrl} label="" aspect="square" /></div>
+                          <div className="grid gap-4 md:grid-cols-2">
+                            <div className="space-y-2"><Label htmlFor="ad_link">链接</Label><Input id="ad_link" name="link" defaultValue={editingAd?.link} placeholder="https://..." required /></div>
+                            <div className="space-y-2">
+                              <Label htmlFor="ad_link_type">链接类型</Label>
+                              <Select name="link_type" defaultValue={editingAd?.link_type || 'external'}>
+                                <SelectTrigger><SelectValue /></SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="internal">站内链接</SelectItem>
+                                  <SelectItem value="external">外部链接</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
                           </div>
-                          <div className="space-y-2"><Label htmlFor="ad_sort">排序</Label><Input id="ad_sort" name="sort_order" type="number" defaultValue={editingAd?.sort_order || 0} /></div>
+                          <div className="grid gap-4 md:grid-cols-3">
+                            <div className="space-y-2"><Label htmlFor="ad_sort">排序</Label><Input id="ad_sort" name="sort_order" type="number" defaultValue={editingAd?.sort_order || 0} /></div>
+                            <div className="space-y-2"><Label htmlFor="ad_start">开始时间</Label><Input id="ad_start" name="start_time" type="datetime-local" defaultValue={editingAd?.start_time?.slice(0, 16)} /></div>
+                            <div className="space-y-2"><Label htmlFor="ad_end">结束时间</Label><Input id="ad_end" name="end_time" type="datetime-local" defaultValue={editingAd?.end_time?.slice(0, 16)} /></div>
+                          </div>
                           <div className="flex items-end"><label className="flex items-center gap-2"><input type="checkbox" name="is_active" defaultChecked={editingAd?.is_active !== false} />激活</label></div>
-                        </div>
-                        <div className="grid gap-4 md:grid-cols-2">
-                          <div className="space-y-2"><Label htmlFor="ad_start">开始时间</Label><Input id="ad_start" name="start_time" type="datetime-local" defaultValue={editingAd?.start_time?.slice(0, 16)} /></div>
-                          <div className="space-y-2"><Label htmlFor="ad_end">结束时间</Label><Input id="ad_end" name="end_time" type="datetime-local" defaultValue={editingAd?.end_time?.slice(0, 16)} /></div>
-                        </div>
-                        <DialogFooter><Button type="submit">保存</Button></DialogFooter>
-                      </form>
-                    </DialogContent>
-                  </Dialog>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  {advertisements.map((ad) => (
-                    <div key={ad.id} className="flex items-center justify-between p-3 border border-border/50 rounded-lg">
-                      <div className="flex items-center gap-3 min-w-0">
-                        {ad.logo_url && <img src={ad.logo_url} alt="" className="w-8 h-8 rounded object-cover shrink-0" />}
-                        <div className="min-w-0">
-                          <p className="font-medium truncate">{ad.title}</p>
-                          <div className="flex gap-2 mt-1">
-                            <Badge variant="secondary" className="text-xs">{ad.placement === 'home_top' ? '首页顶部' : ad.placement === 'home_featured' ? '首页推荐' : ad.placement === 'detail_sidebar' ? '详情侧边' : '详情底部'}</Badge>
-                            <Badge variant="outline" className="text-xs">{ad.link_type === 'internal' ? '站内' : '外部'}</Badge>
-                            {!ad.is_active && <Badge variant="outline" className="text-red-500 text-xs">已停用</Badge>}
+                          <DialogFooter><Button type="submit">保存</Button></DialogFooter>
+                        </form>
+                      </DialogContent>
+                    </Dialog>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    {advertisements.filter(a => a.placement === 'home_top').map((ad) => (
+                      <div key={ad.id} className="flex items-center justify-between p-3 border border-border/50 rounded-lg">
+                        <div className="flex items-center gap-3 min-w-0">
+                          {ad.logo_url && <img src={ad.logo_url} alt="" className="w-8 h-8 rounded object-cover shrink-0" />}
+                          <div className="min-w-0">
+                            <p className="font-medium truncate">{ad.title}</p>
+                            <div className="flex gap-2 mt-1">
+                              <Badge variant="outline" className="text-xs">{ad.link_type === 'internal' ? '站内' : '外部'}</Badge>
+                              {!ad.is_active && <Badge variant="outline" className="text-red-500 text-xs">已停用</Badge>}
+                            </div>
                           </div>
                         </div>
+                        <div className="flex gap-2 shrink-0">
+                          <Button size="sm" variant="outline" onClick={() => { setEditingAd(ad); setAdLogoUrl(ad.logo_url); setAdPlacement(ad.placement); setAdDialogOpen(true) }}><Edit className="h-4 w-4" /></Button>
+                          <Button size="sm" variant="destructive" onClick={() => handleDeleteAdvertisement(ad.id)}><Trash2 className="h-4 w-4" /></Button>
+                        </div>
                       </div>
-                      <div className="flex gap-2 shrink-0">
-                        <Button size="sm" variant="outline" onClick={() => { setEditingAd(ad); setAdLogoUrl(ad.logo_url); setAdDialogOpen(true) }}><Edit className="h-4 w-4" /></Button>
-                        <Button size="sm" variant="destructive" onClick={() => handleDeleteAdvertisement(ad.id)}><Trash2 className="h-4 w-4" /></Button>
+                    ))}
+                    {advertisements.filter(a => a.placement === 'home_top').length === 0 && <p className="text-center text-muted-foreground py-4 text-sm">暂无广告</p>}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* 首页推荐店铺 */}
+              <Card className="border-border/50">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-base">首页推荐店铺</CardTitle>
+                    <Dialog open={adDialogOpen && adPlacement === 'home_featured'} onOpenChange={(open) => { if (open) setAdPlacement('home_featured'); setAdDialogOpen(open) }}>
+                      <DialogTrigger asChild>
+                        <Button size="sm" onClick={() => { setEditingAd(null); setAdLogoUrl(""); setAdProviderId("") }} className="gap-2"><Plus className="h-4 w-4" />添加推荐</Button>
+                      </DialogTrigger>
+                      <DialogContent className="max-w-2xl">
+                        <DialogHeader><DialogTitle>{editingAd ? '编辑推荐' : '添加首页推荐店铺'}</DialogTitle></DialogHeader>
+                        <form onSubmit={handleSaveAdvertisement} className="space-y-4">
+                          <input type="hidden" name="placement" value="home_featured" />
+                          <div className="space-y-2">
+                            <Label>选择店铺</Label>
+                            <Select value={adProviderId || editingAd?.provider_id || ''} onValueChange={(val) => {
+                              setAdProviderId(val)
+                              const p = providers.find(pr => pr.id === val)
+                              if (p) setAdLogoUrl(p.logo_url || '')
+                            }}>
+                              <SelectTrigger><SelectValue placeholder="选择一个店铺" /></SelectTrigger>
+                              <SelectContent>
+                                {providers.map(p => (
+                                  <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="grid gap-4 md:grid-cols-2">
+                            <div className="space-y-2"><Label htmlFor="ad_sort">排序</Label><Input id="ad_sort" name="sort_order" type="number" defaultValue={editingAd?.sort_order || 0} /></div>
+                            <div className="flex items-end"><label className="flex items-center gap-2"><input type="checkbox" name="is_active" defaultChecked={editingAd?.is_active !== false} />激活</label></div>
+                          </div>
+                          <DialogFooter><Button type="submit">保存</Button></DialogFooter>
+                        </form>
+                      </DialogContent>
+                    </Dialog>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    {advertisements.filter(a => a.placement === 'home_featured').map((ad) => (
+                      <div key={ad.id} className="flex items-center justify-between p-3 border border-border/50 rounded-lg">
+                        <div className="flex items-center gap-3 min-w-0">
+                          {ad.logo_url && <img src={ad.logo_url} alt="" className="w-8 h-8 rounded object-cover shrink-0" />}
+                          <div className="min-w-0">
+                            <p className="font-medium truncate">{ad.title}</p>
+                            <div className="flex gap-2 mt-1">
+                              {!ad.is_active && <Badge variant="outline" className="text-red-500 text-xs">已停用</Badge>}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex gap-2 shrink-0">
+                          <Button size="sm" variant="outline" onClick={() => { setEditingAd(ad); setAdLogoUrl(ad.logo_url); setAdPlacement(ad.placement); setAdProviderId(ad.provider_id || ""); setAdDialogOpen(true) }}><Edit className="h-4 w-4" /></Button>
+                          <Button size="sm" variant="destructive" onClick={() => handleDeleteAdvertisement(ad.id)}><Trash2 className="h-4 w-4" /></Button>
+                        </div>
                       </div>
-                    </div>
-                  ))}
-                  {advertisements.length === 0 && <p className="text-center text-muted-foreground py-8">暂无广告数据</p>}
-                </div>
-              </CardContent>
-            </Card>
+                    ))}
+                    {advertisements.filter(a => a.placement === 'home_featured').length === 0 && <p className="text-center text-muted-foreground py-4 text-sm">暂无推荐店铺</p>}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* 详情侧边推荐 */}
+              <Card className="border-border/50">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-base">详情页侧边推荐</CardTitle>
+                    <Dialog open={adDialogOpen && adPlacement === 'detail_sidebar'} onOpenChange={(open) => { if (open) setAdPlacement('detail_sidebar'); setAdDialogOpen(open) }}>
+                      <DialogTrigger asChild>
+                        <Button size="sm" onClick={() => { setEditingAd(null); setAdLogoUrl(""); setAdProviderId("") }} className="gap-2"><Plus className="h-4 w-4" />添加推荐</Button>
+                      </DialogTrigger>
+                      <DialogContent className="max-w-2xl">
+                        <DialogHeader><DialogTitle>{editingAd ? '编辑推荐' : '添加详情侧边推荐'}</DialogTitle></DialogHeader>
+                        <form onSubmit={handleSaveAdvertisement} className="space-y-4">
+                          <input type="hidden" name="placement" value="detail_sidebar" />
+                          <div className="space-y-2">
+                            <Label>选择店铺</Label>
+                            <Select value={adProviderId || editingAd?.provider_id || ''} onValueChange={(val) => {
+                              setAdProviderId(val)
+                              const p = providers.find(pr => pr.id === val)
+                              if (p) setAdLogoUrl(p.logo_url || '')
+                            }}>
+                              <SelectTrigger><SelectValue placeholder="选择一个店铺" /></SelectTrigger>
+                              <SelectContent>
+                                {providers.map(p => (
+                                  <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="grid gap-4 md:grid-cols-2">
+                            <div className="space-y-2"><Label htmlFor="ad_sort">排序</Label><Input id="ad_sort" name="sort_order" type="number" defaultValue={editingAd?.sort_order || 0} /></div>
+                            <div className="flex items-end"><label className="flex items-center gap-2"><input type="checkbox" name="is_active" defaultChecked={editingAd?.is_active !== false} />激活</label></div>
+                          </div>
+                          <DialogFooter><Button type="submit">保存</Button></DialogFooter>
+                        </form>
+                      </DialogContent>
+                    </Dialog>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    {advertisements.filter(a => a.placement === 'detail_sidebar').map((ad) => (
+                      <div key={ad.id} className="flex items-center justify-between p-3 border border-border/50 rounded-lg">
+                        <div className="flex items-center gap-3 min-w-0">
+                          {ad.logo_url && <img src={ad.logo_url} alt="" className="w-8 h-8 rounded object-cover shrink-0" />}
+                          <div className="min-w-0">
+                            <p className="font-medium truncate">{ad.title}</p>
+                            <div className="flex gap-2 mt-1">
+                              {!ad.is_active && <Badge variant="outline" className="text-red-500 text-xs">已停用</Badge>}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex gap-2 shrink-0">
+                          <Button size="sm" variant="outline" onClick={() => { setEditingAd(ad); setAdLogoUrl(ad.logo_url); setAdPlacement(ad.placement); setAdProviderId(ad.provider_id || ""); setAdDialogOpen(true) }}><Edit className="h-4 w-4" /></Button>
+                          <Button size="sm" variant="destructive" onClick={() => handleDeleteAdvertisement(ad.id)}><Trash2 className="h-4 w-4" /></Button>
+                        </div>
+                      </div>
+                    ))}
+                    {advertisements.filter(a => a.placement === 'detail_sidebar').length === 0 && <p className="text-center text-muted-foreground py-4 text-sm">暂无推荐店铺</p>}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* 详情底部推荐 */}
+              <Card className="border-border/50">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-base">详情页底部推荐</CardTitle>
+                    <Dialog open={adDialogOpen && adPlacement === 'detail_bottom'} onOpenChange={(open) => { if (open) setAdPlacement('detail_bottom'); setAdDialogOpen(open) }}>
+                      <DialogTrigger asChild>
+                        <Button size="sm" onClick={() => { setEditingAd(null); setAdLogoUrl(""); setAdProviderId("") }} className="gap-2"><Plus className="h-4 w-4" />添加推荐</Button>
+                      </DialogTrigger>
+                      <DialogContent className="max-w-2xl">
+                        <DialogHeader><DialogTitle>{editingAd ? '编辑推荐' : '添加详情底部推荐'}</DialogTitle></DialogHeader>
+                        <form onSubmit={handleSaveAdvertisement} className="space-y-4">
+                          <input type="hidden" name="placement" value="detail_bottom" />
+                          <div className="space-y-2">
+                            <Label>选择店铺</Label>
+                            <Select value={adProviderId || editingAd?.provider_id || ''} onValueChange={(val) => {
+                              setAdProviderId(val)
+                              const p = providers.find(pr => pr.id === val)
+                              if (p) setAdLogoUrl(p.logo_url || '')
+                            }}>
+                              <SelectTrigger><SelectValue placeholder="选择一个店铺" /></SelectTrigger>
+                              <SelectContent>
+                                {providers.map(p => (
+                                  <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="grid gap-4 md:grid-cols-2">
+                            <div className="space-y-2"><Label htmlFor="ad_sort">排序</Label><Input id="ad_sort" name="sort_order" type="number" defaultValue={editingAd?.sort_order || 0} /></div>
+                            <div className="flex items-end"><label className="flex items-center gap-2"><input type="checkbox" name="is_active" defaultChecked={editingAd?.is_active !== false} />激活</label></div>
+                          </div>
+                          <DialogFooter><Button type="submit">保存</Button></DialogFooter>
+                        </form>
+                      </DialogContent>
+                    </Dialog>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    {advertisements.filter(a => a.placement === 'detail_bottom').map((ad) => (
+                      <div key={ad.id} className="flex items-center justify-between p-3 border border-border/50 rounded-lg">
+                        <div className="flex items-center gap-3 min-w-0">
+                          {ad.logo_url && <img src={ad.logo_url} alt="" className="w-8 h-8 rounded object-cover shrink-0" />}
+                          <div className="min-w-0">
+                            <p className="font-medium truncate">{ad.title}</p>
+                            <div className="flex gap-2 mt-1">
+                              {!ad.is_active && <Badge variant="outline" className="text-red-500 text-xs">已停用</Badge>}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex gap-2 shrink-0">
+                          <Button size="sm" variant="outline" onClick={() => { setEditingAd(ad); setAdLogoUrl(ad.logo_url); setAdPlacement(ad.placement); setAdProviderId(ad.provider_id || ""); setAdDialogOpen(true) }}><Edit className="h-4 w-4" /></Button>
+                          <Button size="sm" variant="destructive" onClick={() => handleDeleteAdvertisement(ad.id)}><Trash2 className="h-4 w-4" /></Button>
+                        </div>
+                      </div>
+                    ))}
+                    {advertisements.filter(a => a.placement === 'detail_bottom').length === 0 && <p className="text-center text-muted-foreground py-4 text-sm">暂无推荐店铺</p>}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           }
         </div>
       </main>
+
+      {/* 统一确认弹窗 */}
+      <AlertDialog open={confirmDialog.open} onOpenChange={(open) => setConfirmDialog(prev => ({ ...prev, open }))}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{confirmDialog.title}</AlertDialogTitle>
+            <AlertDialogDescription>{confirmDialog.description}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>取消</AlertDialogCancel>
+            <AlertDialogAction onClick={() => { confirmDialog.onConfirm(); setConfirmDialog(prev => ({ ...prev, open: false })) }}>确认</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
