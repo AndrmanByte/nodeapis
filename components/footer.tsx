@@ -11,15 +11,25 @@ export function Footer() {
       <div className="mx-auto max-w-7xl">
         <div className="grid gap-8 md:grid-cols-4">
           <div className="md:col-span-2">
-            <Link href="/" className="flex items-center gap-2">
-              <Image
-                src="/icon.svg"
-                alt="NodeAPIs Logo"
-                width={32}
-                height={32}
-                className="rounded-lg"
-              />
-              <span className="text-xl font-bold text-foreground">NodeAPIs</span>
+            <Link href="/" className="flex items-center gap-2.5">
+              <div className="relative w-9 h-9">
+                <Image
+                  src="/icon.svg"
+                  alt="NodeAPIs Logo"
+                  width={36}
+                  height={36}
+                  className="rounded-lg"
+                />
+                <div className="absolute inset-0 rounded-lg border border-primary/30" />
+              </div>
+              <div className="flex flex-col leading-none">
+                <span className="text-lg font-black tracking-[0.3em] text-foreground" style={{ fontFamily: "'Courier New', Consolas, 'Liberation Mono', monospace", textShadow: '0 0 10px rgba(var(--primary), 0.4)' }}>
+                  NODE<span className="text-primary">APIS</span>
+                </span>
+                <span className="text-[9px] tracking-[0.5em] text-muted-foreground/60 mt-0.5" style={{ fontFamily: "'Courier New', Consolas, monospace" }}>
+                  AI API 中转平台
+                </span>
+              </div>
             </Link>
             <p className="mt-4 max-w-md text-sm text-muted-foreground">
               NodeAPIs 致力于收集和展示全网优质的AI API中转服务，帮助开发者找到最适合的API解决方案。

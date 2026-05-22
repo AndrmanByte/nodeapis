@@ -28,9 +28,11 @@ export async function GET(request: NextRequest) {
       .eq('level', userData?.level || 1)
       .single()
 
-    // 检查今天是否已签到
-    const today = new Date().toISOString().split('T')[0]
-    const hasCheckedIn = userData?.last_checkin_date === today
+    // 检查今天是否已签到（使用本地日期避免时区问题）
+    const now = new Date()
+    const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+    const lastCheckin = userData?.last_checkin_date ? String(userData.last_checkin_date).slice(0, 10) : null
+    const hasCheckedIn = lastCheckin === today
 
     // 计算今日可获得积分
     let basePoints = CHECKIN_REWARDS.base
@@ -39,13 +41,14 @@ export async function GET(request: NextRequest) {
 
     // 如果昨天签到了，连续天数+1
     if (userData?.last_checkin_date) {
-      const lastDate = new Date(userData.last_checkin_date)
+      const lastDateStr = String(userData.last_checkin_date).slice(0, 10)
       const yesterday = new Date()
       yesterday.setDate(yesterday.getDate() - 1)
-      
-      if (lastDate.toISOString().split('T')[0] === yesterday.toISOString().split('T')[0]) {
+      const yesterdayStr = `${yesterday.getFullYear()}-${String(yesterday.getMonth() + 1).padStart(2, '0')}-${String(yesterday.getDate()).padStart(2, '0')}`
+
+      if (lastDateStr === yesterdayStr) {
         consecutiveDays = userData.consecutive_checkins + 1
-      } else if (lastDate.toISOString().split('T')[0] !== today) {
+      } else if (lastDateStr !== today) {
         consecutiveDays = 1
       }
     } else {
@@ -109,7 +112,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: '请先登录' }, { status: 401 })
     }
 
-    const today = new Date().toISOString().split('T')[0]
+    const now = new Date()
+    const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
 
     // 获取用户信息
     const { data: userData, error: userError } = await supabase
@@ -134,18 +138,20 @@ export async function POST(request: NextRequest) {
     }
 
     // 检查今天是否已签到
-    if (userData?.last_checkin_date === today) {
+    const lastCheckin = userData?.last_checkin_date ? String(userData.last_checkin_date).slice(0, 10) : null
+    if (lastCheckin === today) {
       return NextResponse.json({ success: false, error: '今天已经签到过了' }, { status: 400 })
     }
 
     // 计算连续天数
     let consecutiveDays = 1
     if (userData?.last_checkin_date) {
-      const lastDate = new Date(userData.last_checkin_date)
+      const lastDateStr = String(userData.last_checkin_date).slice(0, 10)
       const yesterday = new Date()
       yesterday.setDate(yesterday.getDate() - 1)
-      
-      if (lastDate.toISOString().split('T')[0] === yesterday.toISOString().split('T')[0]) {
+      const yesterdayStr = `${yesterday.getFullYear()}-${String(yesterday.getMonth() + 1).padStart(2, '0')}-${String(yesterday.getDate()).padStart(2, '0')}`
+
+      if (lastDateStr === yesterdayStr) {
         consecutiveDays = (userData.consecutive_checkins || 0) + 1
       }
     }
@@ -209,18 +215,26 @@ export async function POST(request: NextRequest) {
 
     if (updateError) throw updateError
 
-    // 创建签到记录
-    const { error: recordError } = await supabase
+    // 创建签到记录（先检查是否已存在）
+    const { data: existingRecord } = await supabase
       .from('checkin_records')
-      .insert({
-        user_id: user.id,
-        checkin_date: today,
-        points_earned: totalPoints,
-        is_consecutive: consecutiveDays > 1,
-        consecutive_days: consecutiveDays
-      })
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('checkin_date', today)
+      .maybeSingle()
 
-    if (recordError) throw recordError
+    if (!existingRecord) {
+      const { error: recordError } = await supabase
+        .from('checkin_records')
+        .insert({
+          user_id: user.id,
+          checkin_date: today,
+          points_earned: totalPoints,
+          is_consecutive: consecutiveDays > 1,
+          consecutive_days: consecutiveDays
+        })
+      if (recordError) throw recordError
+    }
 
     // 创建积分记录
     const { error: pointError } = await supabase

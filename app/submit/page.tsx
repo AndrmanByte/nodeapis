@@ -127,7 +127,7 @@ export default function SubmitPage() {
 
           {status === "success" ? (
             <div className="text-center py-20">
-              <div className="mx-auto w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mb-6"><CheckCircle className="h-8 w-8 text-green-600" /></div>
+              <div className="mx-auto w-16 h-16 rounded-full bg-green-500/10 flex items-center justify-center mb-6"><CheckCircle className="h-8 w-8 text-green-500" /></div>
               <h2 className="text-2xl font-bold text-foreground mb-3">提交成功！</h2>
               <p className="text-muted-foreground mb-2">我们会在审核后将你的中转站添加到列表中。</p>
               <p className="text-sm text-muted-foreground mb-8">审核通过后你会收到通知，感谢你的贡献！</p>
@@ -170,7 +170,7 @@ export default function SubmitPage() {
                       {advantages.length > 0 && (
                         <div className="flex flex-wrap gap-2">
                           {advantages.map((a) => (
-                            <span key={a} className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm bg-green-100 text-green-700 rounded-full">
+                            <span key={a} className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm bg-green-500/10 text-green-500 rounded-full">
                               {a}
                               <button type="button" onClick={() => setAdvantages(advantages.filter(x => x !== a))} className="hover:text-destructive"><X className="h-3.5 w-3.5" /></button>
                             </span>
@@ -348,28 +348,28 @@ export default function SubmitPage() {
                   <h3 className="font-semibold text-foreground">为什么要提交？</h3>
                   <div className="space-y-3">
                     <div className="flex items-start gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-green-100 flex items-center justify-center shrink-0"><Sparkles className="h-4 w-4 text-green-600" /></div>
+                      <div className="w-8 h-8 rounded-lg bg-green-500/10 flex items-center justify-center shrink-0"><Sparkles className="h-4 w-4 text-green-500" /></div>
                       <div>
                         <p className="text-sm font-medium text-foreground">免费曝光</p>
                         <p className="text-xs text-muted-foreground">展示给全网AI开发者</p>
                       </div>
                     </div>
                     <div className="flex items-start gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center shrink-0"><Shield className="h-4 w-4 text-blue-600" /></div>
+                      <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center shrink-0"><Shield className="h-4 w-4 text-blue-500" /></div>
                       <div>
                         <p className="text-sm font-medium text-foreground">建立信任</p>
                         <p className="text-xs text-muted-foreground">认证标识提升可信度</p>
                       </div>
                     </div>
                     <div className="flex items-start gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-purple-100 flex items-center justify-center shrink-0"><Clock className="h-4 w-4 text-purple-600" /></div>
+                      <div className="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center shrink-0"><Clock className="h-4 w-4 text-purple-500" /></div>
                       <div>
                         <p className="text-sm font-medium text-foreground">快速审核</p>
                         <p className="text-xs text-muted-foreground">通常24小时内完成审核</p>
                       </div>
                     </div>
                     <div className="flex items-start gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-yellow-100 flex items-center justify-center shrink-0"><Award className="h-4 w-4 text-yellow-600" /></div>
+                      <div className="w-8 h-8 rounded-lg bg-yellow-500/10 flex items-center justify-center shrink-0"><Award className="h-4 w-4 text-yellow-500" /></div>
                       <div>
                         <p className="text-sm font-medium text-foreground">积分奖励</p>
                         <p className="text-xs text-muted-foreground">提交成功获得50积分</p>

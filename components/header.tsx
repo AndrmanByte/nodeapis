@@ -41,37 +41,49 @@ export function Header() {
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-md">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
-        <Link href="/" className="flex items-center gap-2">
-          <Image
-            src="/icon.svg"
-            alt="NodeAPIs Logo"
-            width={32}
-            height={32}
-            className="rounded-lg"
-          />
-          <span className="text-xl font-bold text-foreground">NodeAPIs</span>
-        </Link>
+        <div className="flex items-center gap-6">
+          <Link href="/" className="flex items-center gap-2.5 group">
+            <div className="relative w-9 h-9">
+              <Image
+                src="/icon.svg"
+                alt="NodeAPIs Logo"
+                width={36}
+                height={36}
+                className="rounded-lg"
+              />
+              <div className="absolute inset-0 rounded-lg border border-primary/30 group-hover:border-primary/60 transition-colors" />
+            </div>
+            <div className="flex flex-col leading-none">
+              <span className="text-lg font-black tracking-[0.3em] text-foreground" style={{ fontFamily: "'Courier New', Consolas, 'Liberation Mono', monospace", textShadow: '0 0 10px rgba(var(--primary), 0.4)' }}>
+                NODE<span className="text-primary">APIS</span>
+              </span>
+              <span className="text-[9px] tracking-[0.5em] text-muted-foreground/60 mt-0.5" style={{ fontFamily: "'Courier New', Consolas, monospace" }}>
+                AI API 中转平台
+              </span>
+            </div>
+          </Link>
 
-        <nav className="hidden items-center gap-8 md:flex">
-          <Link
-            href="/"
-            className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-          >
-            首页
-          </Link>
-          <Link
-            href="/providers"
-            className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-          >
-            中转站
-          </Link>
-          <Link
-            href="/pricing"
-            className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-          >
-            比价
-          </Link>
-        </nav>
+          <nav className="hidden items-center gap-6 md:flex">
+            <Link
+              href="/"
+              className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+            >
+              首页
+            </Link>
+            <Link
+              href="/providers"
+              className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+            >
+              中转站
+            </Link>
+            <Link
+              href="/pricing"
+              className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+            >
+              比价
+            </Link>
+          </nav>
+        </div>
 
         <div className="hidden items-center gap-4 md:flex">
           {isLoggedIn ? (

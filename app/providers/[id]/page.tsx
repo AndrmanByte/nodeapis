@@ -147,7 +147,7 @@ export default function ProviderDetailPage() {
                   {provider.advantages && provider.advantages.length > 0 && (
                     <div className="flex flex-wrap gap-2 mt-3">
                       {provider.advantages.map((a) => (
-                        <span key={a} className="inline-flex items-center rounded-full bg-green-100 text-green-700 px-3 py-1 text-xs font-medium">{a}</span>
+                        <span key={a} className="inline-flex items-center rounded-full bg-green-500/10 text-green-500 px-3 py-1 text-xs font-medium">{a}</span>
                       ))}
                     </div>
                   )}
@@ -267,7 +267,7 @@ export default function ProviderDetailPage() {
                     {provider.free_trial && (
                       <div>
                         <p className="text-xs text-muted-foreground mb-1">免费试用</p>
-                        <span className="inline-flex items-center rounded-full bg-green-100 text-green-700 px-2.5 py-0.5 text-xs font-medium">支持</span>
+                        <span className="inline-flex items-center rounded-full bg-green-500/10 text-green-500 px-2.5 py-0.5 text-xs font-medium">支持</span>
                       </div>
                     )}
                   </div>

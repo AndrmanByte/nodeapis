@@ -20,7 +20,9 @@
       "Bash(gh repo:*)",
       "Bash(npx vercel:*)",
       "Bash(cmd:*)",
-      "Bash(nslookup:*)"
+      "Bash(nslookup:*)",
+      "Bash(pkill -f \"next dev\")",
+      "Bash(npx supabase:*)"
     ]
   }
 }

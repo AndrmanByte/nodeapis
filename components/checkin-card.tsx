@@ -176,8 +176,8 @@ export function CheckinCard() {
     <div className="space-y-4">
       {/* 成功动画 */}
       {showSuccess && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
-          <div className="animate-bounce rounded-xl bg-primary p-8 text-center text-primary-foreground shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="animate-bounce rounded-xl bg-card border border-border/50 p-8 text-center text-foreground shadow-2xl shadow-primary/5">
             <Sparkles className="mx-auto mb-4 h-16 w-16" />
             <p className="text-2xl font-bold">签到成功!</p>
             <p className="mt-2 text-lg">获得 {earnedPoints} 积分</p>

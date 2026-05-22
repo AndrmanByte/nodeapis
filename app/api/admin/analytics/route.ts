@@ -21,10 +21,10 @@ async function umamiRequest(endpoint: string, params?: Record<string, string>) {
 
   const res = await fetch(url.toString(), {
     headers: {
-      'Authorization': `Bearer ${UMAMI_API_TOKEN}`,
+      'x-umami-api-key': UMAMI_API_TOKEN,
       'Content-Type': 'application/json',
     },
-    next: { revalidate: 60 } // 缓存60秒
+    cache: 'no-store'
   })
 
   if (!res.ok) {
