@@ -11,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { createClient } from '@/lib/supabase/client'
 import type { User, Provider, ProviderSubmission, Notification, TrialOffer } from '@/lib/types'
 import { LoginDialog } from '@/components/login-dialog'
+import { Header } from '@/components/header'
 import {
   User as UserIcon,
   Store,
@@ -24,7 +25,6 @@ import {
   Check,
   X,
   Clock,
-  ArrowLeft,
   Gift,
   Plus,
   Loader2,
@@ -262,19 +262,7 @@ export default function ProfilePage() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b border-border/50 bg-card/50 backdrop-blur sticky top-0 z-50">
-        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2 text-muted-foreground hover:text-foreground">
-            <ArrowLeft className="h-4 w-4" />
-            返回首页
-          </Link>
-          <Button variant="ghost" size="sm" onClick={handleLogout} className="gap-2">
-            <LogOut className="h-4 w-4" />
-            退出登录
-          </Button>
-        </div>
-      </header>
+      <Header />
 
       <main className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto space-y-8">
@@ -580,6 +568,15 @@ export default function ProfilePage() {
                       </span>
                     </div>
                   </div>
+                </CardContent>
+              </Card>
+
+              <Card className="border-border/50">
+                <CardContent className="p-4">
+                  <Button variant="destructive" onClick={handleLogout} className="gap-2 w-full">
+                    <LogOut className="h-4 w-4" />
+                    退出登录
+                  </Button>
                 </CardContent>
               </Card>
 

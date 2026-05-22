@@ -20,6 +20,7 @@ import {
   Send,
   Shield,
   Settings,
+  Sparkles,
 } from "lucide-react"
 import type { Vendor } from "@/lib/types"
 
@@ -33,6 +34,7 @@ export default function AdminNewProviderPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
+  const [aiLoading, setAiLoading] = useState(false)
 
   const [formData, setFormData] = useState({
     name: "",
@@ -74,6 +76,31 @@ export default function AdminNewProviderPage() {
   const updateModel = (index: number, field: keyof ModelPricing, value: string) => setModels(models.map((m, i) => (i === index ? { ...m, [field]: value } : m)))
   const addCustomTag = () => { const tag = customTagInput.trim(); if (tag && customTags.length < 3 && !customTags.includes(tag)) { setCustomTags([...customTags, tag]); setCustomTagInput("") } }
   const removeCustomTag = (tag: string) => setCustomTags(customTags.filter((t) => t !== tag))
+
+  const handleAiOptimize = async () => {
+    if (!formData.name || !formData.description) {
+      setError("请先填写名称和描述"); return
+    }
+    setAiLoading(true)
+    setError("")
+    try {
+      const res = await fetch("/api/ai/optimize-description", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: formData.name, description: formData.description }),
+      })
+      const data = await res.json()
+      if (data.success && data.data) {
+        setFormData({ ...formData, description: data.data })
+      } else {
+        setError(data.error || "AI 优化失败")
+      }
+    } catch {
+      setError("AI 服务调用失败")
+    } finally {
+      setAiLoading(false)
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -164,8 +191,18 @@ export default function AdminNewProviderPage() {
                 <Input placeholder="用一句话概括你的服务" value={formData.short_description} onChange={(e) => setFormData({ ...formData, short_description: e.target.value })} required className="h-11" />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground">详细描述 <span className="text-destructive">*</span></label>
-                <Textarea placeholder="详细描述你的服务特点、功能和优势" value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} required rows={5} />
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-medium text-foreground">详细描述 <span className="text-destructive">*</span></label>
+                  <Button type="button" variant="outline" size="sm" className="gap-1.5 text-primary" onClick={handleAiOptimize} disabled={aiLoading || !formData.name || !formData.description}>
+                    {aiLoading ? (
+                      <><Loader2 className="h-3.5 w-3.5 animate-spin" /> AI 优化中...</>
+                    ) : (
+                      <><Sparkles className="h-3.5 w-3.5" /> AI 优化</>
+                    )}
+                  </Button>
+                </div>
+                <Textarea placeholder="尽量详细描述你的服务特点、功能和优势，AI 会帮你优化成结构化描述" value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} required rows={5} />
+                <p className="text-xs text-muted-foreground">填写越多，AI 优化效果越好</p>
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium text-foreground">优势亮点 <span className="text-muted-foreground font-normal">（最多3个，每个15字）</span></label>

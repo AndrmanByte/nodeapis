@@ -8,11 +8,12 @@ import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import type { LotteryEvent, LotteryParticipant, User, Level } from '@/lib/types'
-import { Gift, Users, Clock, Store, ArrowLeft, Trophy, Check, Coins, Sparkles } from "lucide-react"
+import { Gift, Users, Clock, Store, Trophy, Check, Coins, Sparkles } from "lucide-react"
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 import { LoginDialog } from '@/components/login-dialog'
+import { Header } from '@/components/header'
 
 interface LotteryEventWithProvider extends LotteryEvent {
   provider?: {
@@ -189,22 +190,7 @@ export default function LotteryDetailPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b border-border/50 bg-card/50 backdrop-blur sticky top-0 z-50">
-        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2 text-muted-foreground hover:text-foreground">
-            <ArrowLeft className="h-4 w-4" />
-            返回首页
-          </Link>
-          {user && (
-            <div className="flex items-center gap-2 text-sm">
-              <Coins className="h-4 w-4 text-primary" />
-              <span className="font-medium">{userPoints}</span>
-              <span className="text-muted-foreground">积分</span>
-            </div>
-          )}
-        </div>
-      </header>
+      <Header />
 
       <main className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">

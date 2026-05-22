@@ -227,6 +227,14 @@ export default function AdminDashboard() {
       features: (formData.get('features') as string)?.split(',').map(f => f.trim()).filter(Boolean) || [],
       supported_vendors: formData.getAll('supported_vendors') as string[],
       supported_models: (formData.get('supported_models') as string)?.split(',').map(m => m.trim()).filter(Boolean) || [],
+      api_url: formData.get('api_url') as string || '',
+      contact_email: formData.get('contact_email') as string || '',
+      contact: formData.get('contact') as string || '',
+      register_type: formData.get('register_type') as string || '开放注册',
+      min_deposit: formData.get('min_deposit') as string || '',
+      payment_methods: formData.getAll('payment_methods') as string[],
+      free_trial: formData.get('free_trial') === 'on',
+      advantages: (formData.get('advantages') as string)?.split(',').map(a => a.trim()).filter(Boolean) || [],
     }
 
     const url = editingProvider ? `/api/admin/providers/${editingProvider.id}` : '/api/admin/providers'
@@ -701,7 +709,7 @@ export default function AdminDashboard() {
 
                   {/* 编辑中转站弹窗 */}
                   <Dialog open={providerDialogOpen} onOpenChange={setProviderDialogOpen}>
-                    <DialogContent className="max-w-2xl">
+                    <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
                       <DialogHeader><DialogTitle>编辑中转站</DialogTitle></DialogHeader>
                       <form onSubmit={handleSaveProvider} className="space-y-4">
                         <div className="grid gap-4 md:grid-cols-2">
@@ -742,9 +750,39 @@ export default function AdminDashboard() {
                           </div>
                         </div>
                         <div className="space-y-2"><Label htmlFor="supported_models">支持的模型 (逗号分隔)</Label><Input id="supported_models" name="supported_models" defaultValue={editingProvider?.supported_models?.join(', ')} /></div>
+                        <div className="grid gap-4 md:grid-cols-2">
+                          <div className="space-y-2"><Label htmlFor="api_url">API 地址</Label><Input id="api_url" name="api_url" defaultValue={(editingProvider as any)?.api_url || ''} placeholder="https://api.example.com/v1" /></div>
+                          <div className="space-y-2"><Label htmlFor="register_type">注册方式</Label>
+                            <select id="register_type" name="register_type" defaultValue={(editingProvider as any)?.register_type || '开放注册'} className="w-full h-10 rounded-md border border-border bg-background px-3 text-sm">
+                              <option value="开放注册">开放注册</option>
+                              <option value="邀请码">邀请码</option>
+                              <option value="需审核">需审核</option>
+                            </select>
+                          </div>
+                        </div>
+                        <div className="grid gap-4 md:grid-cols-2">
+                          <div className="space-y-2"><Label htmlFor="contact_email">联系邮箱</Label><Input id="contact_email" name="contact_email" defaultValue={(editingProvider as any)?.contact_email || ''} placeholder="your@email.com" /></div>
+                          <div className="space-y-2"><Label htmlFor="contact">客服联系方式</Label><Input id="contact" name="contact" defaultValue={(editingProvider as any)?.contact || ''} placeholder="Telegram @xxx" /></div>
+                        </div>
+                        <div className="grid gap-4 md:grid-cols-2">
+                          <div className="space-y-2"><Label htmlFor="min_deposit">起充金额</Label><Input id="min_deposit" name="min_deposit" defaultValue={(editingProvider as any)?.min_deposit || ''} placeholder="¥1" /></div>
+                          <div className="space-y-2"><Label htmlFor="advantages">优势亮点 (逗号分隔)</Label><Input id="advantages" name="advantages" defaultValue={(editingProvider as any)?.advantages?.join(', ') || ''} placeholder="全网最低价, 响应快速" /></div>
+                        </div>
+                        <div className="space-y-2">
+                          <Label>付费方式</Label>
+                          <div className="flex flex-wrap gap-3">
+                            {['支付宝', '微信', 'USDT', 'PayPal', '银行卡'].map((method) => (
+                              <label key={method} className="flex items-center gap-1.5 text-sm">
+                                <input type="checkbox" name="payment_methods" value={method} defaultChecked={(editingProvider as any)?.payment_methods?.includes(method)} />
+                                {method}
+                              </label>
+                            ))}
+                          </div>
+                        </div>
                         <div className="flex gap-4">
                           <label className="flex items-center gap-2"><input type="checkbox" name="is_verified" defaultChecked={editingProvider?.is_verified} />已认证</label>
                           <label className="flex items-center gap-2"><input type="checkbox" name="is_featured" defaultChecked={editingProvider?.is_featured} />推荐</label>
+                          <label className="flex items-center gap-2"><input type="checkbox" name="free_trial" defaultChecked={(editingProvider as any)?.free_trial} />免费试用</label>
                         </div>
                         <DialogFooter><Button type="submit">保存</Button></DialogFooter>
                       </form>
