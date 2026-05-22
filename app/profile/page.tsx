@@ -30,7 +30,6 @@ import {
   Loader2,
   KeyRound,
   Copy,
-  Check,
 } from "lucide-react"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Textarea } from "@/components/ui/textarea"
