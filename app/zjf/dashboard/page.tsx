@@ -1452,6 +1452,68 @@ export default function AdminDashboard() {
                   </div>
                 </CardContent>
               </Card>
+
+              {/* 评论广场侧边推荐 */}
+              <Card className="border-border/50">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-base">评论广场侧边推荐</CardTitle>
+                    <Dialog open={adDialogOpen && adPlacement === 'comments_sidebar'} onOpenChange={(open) => { if (open) setAdPlacement('comments_sidebar'); setAdDialogOpen(open) }}>
+                      <DialogTrigger asChild>
+                        <Button size="sm" onClick={() => { setEditingAd(null); setAdLogoUrl(""); setAdProviderId("") }} className="gap-2"><Plus className="h-4 w-4" />添加推荐</Button>
+                      </DialogTrigger>
+                      <DialogContent className="max-w-2xl">
+                        <DialogHeader><DialogTitle>{editingAd ? '编辑推荐' : '添加评论广场侧边推荐'}</DialogTitle></DialogHeader>
+                        <form onSubmit={handleSaveAdvertisement} className="space-y-4">
+                          <input type="hidden" name="placement" value="comments_sidebar" />
+                          <div className="space-y-2">
+                            <Label>选择店铺</Label>
+                            <Select value={adProviderId || editingAd?.provider_id || ''} onValueChange={(val) => {
+                              setAdProviderId(val)
+                              const p = providers.find(pr => pr.id === val)
+                              if (p) setAdLogoUrl(p.logo_url || '')
+                            }}>
+                              <SelectTrigger><SelectValue placeholder="选择一个店铺" /></SelectTrigger>
+                              <SelectContent>
+                                {providers.map(p => (
+                                  <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="grid gap-4 md:grid-cols-2">
+                            <div className="space-y-2"><Label htmlFor="ad_sort">排序</Label><Input id="ad_sort" name="sort_order" type="number" defaultValue={editingAd?.sort_order || 0} /></div>
+                            <div className="flex items-end"><label className="flex items-center gap-2"><input type="checkbox" name="is_active" defaultChecked={editingAd?.is_active !== false} />激活</label></div>
+                          </div>
+                          <DialogFooter><Button type="submit">保存</Button></DialogFooter>
+                        </form>
+                      </DialogContent>
+                    </Dialog>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    {advertisements.filter(a => a.placement === 'comments_sidebar').map((ad) => (
+                      <div key={ad.id} className="flex items-center justify-between p-3 border border-border/50 rounded-lg">
+                        <div className="flex items-center gap-3 min-w-0">
+                          {ad.logo_url && <img src={ad.logo_url} alt="" className="w-8 h-8 rounded object-cover shrink-0" />}
+                          <div className="min-w-0">
+                            <p className="font-medium truncate">{ad.title}</p>
+                            <div className="flex gap-2 mt-1">
+                              {!ad.is_active && <Badge variant="outline" className="text-red-500 text-xs">已停用</Badge>}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex gap-2 shrink-0">
+                          <Button size="sm" variant="outline" className="gap-1" onClick={() => { setEditingAd(ad); setAdLogoUrl(ad.logo_url); setAdPlacement(ad.placement); setAdProviderId(ad.provider_id || ""); setAdDialogOpen(true) }}><Edit className="h-4 w-4" /> 编辑</Button>
+                          <Button size="sm" variant="destructive" className="gap-1" onClick={() => handleDeleteAdvertisement(ad.id)}><Trash2 className="h-4 w-4" /> 删除</Button>
+                        </div>
+                      </div>
+                    ))}
+                    {advertisements.filter(a => a.placement === 'comments_sidebar').length === 0 && <p className="text-center text-muted-foreground py-4 text-sm">暂无推荐店铺</p>}
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           }
 

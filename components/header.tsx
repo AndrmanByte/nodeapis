@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 import { Menu, X, User, Coins, Gift, Home, Globe, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -9,6 +10,7 @@ import { createClient } from "@/lib/supabase/client";
 import { LoginDialog } from "@/components/login-dialog";
 
 export function Header() {
+  const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [authLoading, setAuthLoading] = useState(true);
@@ -43,6 +45,27 @@ export function Header() {
     }
   };
 
+  const isActive = (href: string) => {
+    if (href === '/') return pathname === '/';
+    return pathname.startsWith(href);
+  };
+
+  const navLinkClass = (href: string, color?: string) => {
+    const active = isActive(href);
+    if (color === 'green') {
+      return `text-sm font-medium transition-colors inline-flex items-center gap-1.5 pb-0.5 border-b-2 ${
+        active
+          ? 'text-green-600 border-green-600'
+          : 'text-green-600/70 border-transparent hover:text-green-600 hover:border-green-600/50'
+      }`;
+    }
+    return `text-sm transition-colors inline-flex items-center gap-1.5 pb-0.5 border-b-2 ${
+      active
+        ? 'text-foreground font-medium border-primary'
+        : 'text-muted-foreground border-transparent hover:text-foreground hover:border-border'
+    }`;
+  };
+
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-md">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
@@ -68,32 +91,20 @@ export function Header() {
             </div>
           </Link>
 
-          <nav className="hidden items-center gap-6 md:flex">
-            <Link
-              href="/"
-              className="text-sm text-muted-foreground transition-colors hover:text-foreground inline-flex items-center gap-1"
-            >
+          <nav className="hidden items-center gap-5 md:flex">
+            <Link href="/" className={navLinkClass('/')}>
               <Home className="h-4 w-4" />
               首页
             </Link>
-            <Link
-              href="/providers"
-              className="text-sm text-muted-foreground transition-colors hover:text-foreground inline-flex items-center gap-1"
-            >
+            <Link href="/providers" className={navLinkClass('/providers')}>
               <Globe className="h-4 w-4" />
               中转站
             </Link>
-            <Link
-              href="/comments"
-              className="text-sm text-muted-foreground transition-colors hover:text-foreground inline-flex items-center gap-1"
-            >
+            <Link href="/comments" className={navLinkClass('/comments')}>
               <MessageSquare className="h-4 w-4" />
               评论广场
             </Link>
-            <Link
-              href="/trials"
-              className="text-sm text-green-600 font-medium transition-colors hover:text-green-700 inline-flex items-center gap-1"
-            >
+            <Link href="/trials" className={navLinkClass('/trials', 'green')}>
               <Gift className="h-4 w-4" />
               免费试用
             </Link>
@@ -147,39 +158,31 @@ export function Header() {
 
       {mobileMenuOpen && (
         <div className="border-t border-border bg-background px-4 py-4 md:hidden">
-          <nav className="flex flex-col gap-4">
-            <Link
-              href="/"
-              className="text-sm text-muted-foreground inline-flex items-center gap-1"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              <Home className="h-4 w-4" />
-              首页
-            </Link>
-            <Link
-              href="/providers"
-              className="text-sm text-muted-foreground inline-flex items-center gap-1"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              <Globe className="h-4 w-4" />
-              中转站
-            </Link>
-            <Link
-              href="/comments"
-              className="text-sm text-muted-foreground inline-flex items-center gap-1"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              <MessageSquare className="h-4 w-4" />
-              评论广场
-            </Link>
-            <Link
-              href="/trials"
-              className="text-sm text-green-600 font-medium inline-flex items-center gap-1"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              <Gift className="h-4 w-4" />
-              免费试用
-            </Link>
+          <nav className="flex flex-col gap-1">
+            {[
+              { href: '/', icon: Home, label: '首页' },
+              { href: '/providers', icon: Globe, label: '中转站' },
+              { href: '/comments', icon: MessageSquare, label: '评论广场' },
+              { href: '/trials', icon: Gift, label: '免费试用', green: true },
+            ].map(({ href, icon: Icon, label, green }) => (
+              <Link
+                key={href}
+                href={href}
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
+                  isActive(href)
+                    ? green
+                      ? 'bg-green-500/10 text-green-600 font-medium'
+                      : 'bg-primary/10 text-foreground font-medium'
+                    : green
+                      ? 'text-green-600/70 hover:text-green-600'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                }`}
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <Icon className="h-4 w-4" />
+                {label}
+              </Link>
+            ))}
             <div className="flex flex-col gap-2 pt-2">
               {authLoading ? (
                 <div className="h-9" />

@@ -62,8 +62,8 @@ export function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/pricing" className="text-sm text-muted-foreground transition-colors hover:text-foreground">
-                  比价中心
+                <Link href="/comments" className="text-sm text-muted-foreground transition-colors hover:text-foreground">
+                  评论广场
                 </Link>
               </li>
               <li>

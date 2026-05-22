@@ -275,7 +275,7 @@ export interface Advertisement {
   logo_url: string
   link: string
   link_type: 'internal' | 'external'
-  placement: 'home_top' | 'home_featured' | 'detail_sidebar' | 'detail_bottom'
+  placement: 'home_top' | 'home_featured' | 'detail_sidebar' | 'detail_bottom' | 'comments_sidebar'
   sort_order: number
   is_active: boolean
   btn_text: string

@@ -12,7 +12,7 @@ import {
   ExternalLink,
   CheckCircle2,
   Search,
-  ArrowLeft,
+
   Zap,
   Globe,
 } from "lucide-react"
@@ -75,13 +75,6 @@ export default function ProvidersPage() {
       <main className="px-4 py-12 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl">
           {/* Back */}
-          <Link
-            href="/"
-            className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors mb-8"
-          >
-            <ArrowLeft className="h-4 w-4" /> 返回首页
-          </Link>
-
           {/* Header */}
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-foreground mb-2">全部中转站</h1>
