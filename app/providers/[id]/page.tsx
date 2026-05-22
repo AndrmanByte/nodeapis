@@ -25,10 +25,17 @@ import {
   Sparkles,
   Gift,
   Coins,
+  Star,
+  ImageIcon,
+  Trash2,
+  MessageSquare,
+  X,
 } from "lucide-react"
-import type { Provider, Advertisement, TrialOffer } from "@/lib/types"
+import type { Provider, Advertisement, TrialOffer, ProviderComment } from "@/lib/types"
 import { createClient } from "@/lib/supabase/client"
 import { LoginDialog } from "@/components/login-dialog"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { uploadImage } from "@/lib/upload"
 
 export default function ProviderDetailPage() {
   const params = useParams()
@@ -41,6 +48,112 @@ export default function ProviderDetailPage() {
   const [copied, setCopied] = useState(false)
   const [sidebarAds, setSidebarAds] = useState<Advertisement[]>([])
   const [bottomAds, setBottomAds] = useState<Advertisement[]>([])
+
+  // 评论相关状态
+  const [comments, setComments] = useState<ProviderComment[]>([])
+  const [commentStats, setCommentStats] = useState({ count: 0, avg_rating: 0 })
+  const [commentText, setCommentText] = useState("")
+  const [commentRating, setCommentRating] = useState(5)
+  const [commentImages, setCommentImages] = useState<string[]>([])
+  const [submittingComment, setSubmittingComment] = useState(false)
+  const [commentError, setCommentError] = useState("")
+  const [currentUser, setCurrentUser] = useState<{ id: string } | null>(null)
+  const [loginDialogOpen, setLoginDialogOpen] = useState(false)
+  const [imageViewer, setImageViewer] = useState<string | null>(null)
+  const [uploadingImage, setUploadingImage] = useState(false)
+
+  const supabase = createClient()
+
+  const loadComments = async (providerId: string) => {
+    try {
+      const res = await fetch(`/api/providers/${providerId}/comments`)
+      const data = await res.json()
+      if (data.success) {
+        setComments(data.data || [])
+        setCommentStats(data.stats || { count: 0, avg_rating: 0 })
+      }
+    } catch {}
+  }
+
+  const handleSubmitComment = async () => {
+    if (!currentUser) {
+      setLoginDialogOpen(true)
+      return
+    }
+    if (!commentText.trim()) {
+      setCommentError("请输入评论内容")
+      return
+    }
+    setSubmittingComment(true)
+    setCommentError("")
+    try {
+      const res = await fetch(`/api/providers/${params.id}/comments`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          content: commentText.trim(),
+          images: commentImages,
+          rating: commentRating,
+        }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        setComments(prev => [data.data, ...prev])
+        setCommentStats(prev => ({
+          count: prev.count + 1,
+          avg_rating: prev.count === 0
+            ? data.data.rating
+            : Math.round(((prev.avg_rating * prev.count + data.data.rating) / (prev.count + 1)) * 10) / 10,
+        }))
+        setCommentText("")
+        setCommentRating(5)
+        setCommentImages([])
+      } else {
+        setCommentError(data.error || "评论失败")
+      }
+    } catch {
+      setCommentError("网络错误")
+    } finally {
+      setSubmittingComment(false)
+    }
+  }
+
+  const handleDeleteComment = async (commentId: string) => {
+    if (!confirm("确定删除这条评论？")) return
+    try {
+      const res = await fetch(`/api/providers/${params.id}/comments/${commentId}`, {
+        method: "DELETE",
+      })
+      const data = await res.json()
+      if (data.success) {
+        const deleted = comments.find(c => c.id === commentId)
+        setComments(prev => prev.filter(c => c.id !== commentId))
+        setCommentStats(prev => ({
+          count: prev.count - 1,
+          avg_rating: prev.count <= 1 ? 0 : Math.round(((prev.avg_rating * prev.count - (deleted?.rating || 0)) / (prev.count - 1)) * 10) / 10,
+        }))
+      }
+    } catch {}
+  }
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (commentImages.length >= 3) {
+      setCommentError("最多上传3张图片")
+      return
+    }
+    setUploadingImage(true)
+    setCommentError("")
+    try {
+      const url = await uploadImage(file)
+      setCommentImages(prev => [...prev, url])
+    } catch {
+      setCommentError("图片上传失败")
+    } finally {
+      setUploadingImage(false)
+    }
+  }
 
   useEffect(() => {
     async function fetchProvider() {
@@ -58,7 +171,15 @@ export default function ProviderDetailPage() {
         setLoading(false)
       }
     }
-    if (params.id) fetchProvider()
+    if (params.id) {
+      fetchProvider()
+      loadComments(params.id as string)
+    }
+
+    // 检查登录状态
+    supabase.auth.getUser().then(({ data }) => {
+      setCurrentUser(data.user)
+    })
 
     fetch('/api/advertisements?placement=detail_sidebar')
       .then(res => res.json())
@@ -394,54 +515,267 @@ export default function ProviderDetailPage() {
               </div>
 
               {/* Actions */}
-              <div className="rounded-xl border border-border bg-card p-5 space-y-3">
-                <h3 className="font-semibold text-foreground text-sm mb-1">操作</h3>
-
-                {/* Like */}
-                <Button
-                  variant={liked ? "default" : "outline"}
-                  size="sm"
-                  className="w-full gap-1.5"
-                  onClick={() => setLiked(!liked)}
-                >
-                  <ThumbsUp className="h-4 w-4" /> {liked ? "已点赞" : "点赞"}
-                </Button>
-
-                {/* Feedback */}
-                <div className="flex gap-2">
-                  <Button
-                    variant={feedback === "up" ? "default" : "outline"}
-                    size="sm"
-                    className="flex-1 gap-1.5"
-                    onClick={() => setFeedback("up")}
-                  >
-                    <ThumbsUp className="h-3.5 w-3.5" /> 有帮助
-                  </Button>
-                  <Button
-                    variant={feedback === "down" ? "destructive" : "outline"}
-                    size="sm"
-                    className="flex-1 gap-1.5"
-                    onClick={() => setFeedback("down")}
-                  >
-                    <ThumbsDown className="h-3.5 w-3.5" /> 需改进
-                  </Button>
+              <div className="rounded-xl border border-border bg-card overflow-hidden">
+                <div className="p-4 border-b border-border">
+                  <div className="flex items-center gap-3">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className={`flex-1 gap-1.5 rounded-lg ${liked ? 'bg-primary/10 text-primary' : ''}`}
+                      onClick={() => setLiked(!liked)}
+                    >
+                      <ThumbsUp className={`h-4 w-4 ${liked ? 'fill-current' : ''}`} />
+                      {liked ? "已点赞" : "点赞"}
+                    </Button>
+                    <div className="w-px h-5 bg-border" />
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="flex-1 gap-1.5 rounded-lg"
+                      onClick={handleCopyLink}
+                    >
+                      {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+                      {copied ? "已复制" : "分享"}
+                    </Button>
+                  </div>
                 </div>
-
-                {/* Copy Link */}
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full gap-1.5"
-                  onClick={handleCopyLink}
-                >
-                  {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
-                  {copied ? "已复制" : "复制链接"}
-                </Button>
-
-                {feedback && <p className="text-xs text-center text-muted-foreground">感谢你的反馈！</p>}
+                <div className="p-4">
+                  <p className="text-xs text-muted-foreground mb-2.5">这个中转站对你有帮助吗？</p>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setFeedback("up")}
+                      className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-sm font-medium transition-all ${
+                        feedback === "up"
+                          ? 'bg-green-500/10 text-green-600 border border-green-500/30'
+                          : 'bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground border border-transparent'
+                      }`}
+                    >
+                      <ThumbsUp className={`h-3.5 w-3.5 ${feedback === "up" ? 'fill-current' : ''}`} />
+                      有帮助
+                    </button>
+                    <button
+                      onClick={() => setFeedback("down")}
+                      className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-sm font-medium transition-all ${
+                        feedback === "down"
+                          ? 'bg-red-500/10 text-red-500 border border-red-500/30'
+                          : 'bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground border border-transparent'
+                      }`}
+                    >
+                      <ThumbsDown className={`h-3.5 w-3.5 ${feedback === "down" ? 'fill-current' : ''}`} />
+                      需改进
+                    </button>
+                  </div>
+                  {feedback && (
+                    <p className="text-xs text-center text-green-600 mt-2.5 flex items-center justify-center gap-1">
+                      <Check className="h-3 w-3" /> 感谢你的反馈！
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
           </div>
+
+          {/* 评论区 */}
+          <div className="mt-8 rounded-xl border border-border bg-card overflow-hidden">
+            {/* 评论头部 */}
+            <div className="p-6 border-b border-border">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <MessageSquare className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-semibold text-foreground">用户评论 ({commentStats.count})</h2>
+                    {commentStats.count > 0 && (
+                      <div className="flex items-center gap-1.5 mt-0.5">
+                        <div className="flex items-center gap-0.5">
+                          {[1, 2, 3, 4, 5].map((s) => (
+                            <Star
+                              key={s}
+                              className={`h-3.5 w-3.5 ${s <= Math.round(commentStats.avg_rating) ? 'text-yellow-400 fill-yellow-400' : 'text-muted-foreground/30'}`}
+                            />
+                          ))}
+                        </div>
+                        <span className="text-sm text-muted-foreground">{commentStats.avg_rating} 分</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* 发表评论 */}
+            <div className="p-6 border-b border-border bg-muted/20">
+              {currentUser ? (
+                <div className="space-y-4">
+                  {/* 星级评分 */}
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-muted-foreground">评分：</span>
+                    <div className="flex items-center gap-1">
+                      {[1, 2, 3, 4, 5].map((s) => (
+                        <button
+                          key={s}
+                          type="button"
+                          onClick={() => setCommentRating(s)}
+                          className="p-0.5 transition-transform hover:scale-110"
+                        >
+                          <Star
+                            className={`h-5 w-5 transition-colors ${s <= commentRating ? 'text-yellow-400 fill-yellow-400' : 'text-muted-foreground/30 hover:text-yellow-400/50'}`}
+                          />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* 评论内容 */}
+                  <textarea
+                    value={commentText}
+                    onChange={(e) => { setCommentText(e.target.value); setCommentError("") }}
+                    placeholder="分享你的使用体验..."
+                    className="w-full min-h-[100px] rounded-lg border border-border bg-background px-4 py-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/30"
+                    maxLength={1000}
+                  />
+
+                  {/* 图片预览 */}
+                  {commentImages.length > 0 && (
+                    <div className="flex gap-2">
+                      {commentImages.map((img, i) => (
+                        <div key={i} className="relative w-20 h-20 rounded-lg overflow-hidden border border-border group">
+                          <img src={img} alt="" className="w-full h-full object-cover" />
+                          <button
+                            type="button"
+                            onClick={() => setCommentImages(prev => prev.filter((_, idx) => idx !== i))}
+                            className="absolute top-1 right-1 w-5 h-5 rounded-full bg-black/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <label className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-background text-sm text-muted-foreground hover:text-foreground hover:border-primary/30 transition-colors cursor-pointer">
+                        {uploadingImage ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <ImageIcon className="h-4 w-4" />
+                        )}
+                        图片
+                        <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} disabled={uploadingImage || commentImages.length >= 3} />
+                      </label>
+                      <span className="text-xs text-muted-foreground">{commentImages.length}/3</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      {commentError && <span className="text-xs text-red-500">{commentError}</span>}
+                      <Button
+                        size="sm"
+                        onClick={handleSubmitComment}
+                        disabled={submittingComment || !commentText.trim()}
+                        className="gap-1.5"
+                      >
+                        {submittingComment ? (
+                          <><Loader2 className="h-3.5 w-3.5 animate-spin" /> 发布中</>
+                        ) : (
+                          <><Send className="h-3.5 w-3.5" /> 发布评论</>
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-4">
+                  <p className="text-sm text-muted-foreground mb-3">登录后即可发表评论</p>
+                  <Button size="sm" onClick={() => setLoginDialogOpen(true)} className="gap-1.5">
+                    登录评论
+                  </Button>
+                </div>
+              )}
+            </div>
+
+            {/* 评论列表 */}
+            <div className="divide-y divide-border">
+              {comments.length === 0 ? (
+                <div className="p-12 text-center">
+                  <MessageSquare className="h-10 w-10 mx-auto mb-3 text-muted-foreground/30" />
+                  <p className="text-sm text-muted-foreground">暂无评论，快来发表第一条吧</p>
+                </div>
+              ) : (
+                comments.map((comment) => (
+                  <div key={comment.id} className="p-6">
+                    <div className="flex items-start gap-3">
+                      <Avatar className="h-9 w-9 shrink-0">
+                        <AvatarImage src={comment.user?.avatar_url} />
+                        <AvatarFallback className="text-xs">
+                          {comment.user?.username?.[0] || '?'}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <span className="text-sm font-medium truncate">{comment.user?.username || '匿名用户'}</span>
+                            <span className="text-xs text-muted-foreground shrink-0">Lv.{comment.user?.level || 1}</span>
+                            <div className="flex items-center gap-0.5 shrink-0">
+                              {[1, 2, 3, 4, 5].map((s) => (
+                                <Star
+                                  key={s}
+                                  className={`h-3 w-3 ${s <= comment.rating ? 'text-yellow-400 fill-yellow-400' : 'text-muted-foreground/30'}`}
+                                />
+                              ))}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 shrink-0">
+                            <span className="text-xs text-muted-foreground">
+                              {new Date(comment.created_at).toLocaleDateString('zh-CN')}
+                            </span>
+                            {currentUser?.id === comment.user_id && (
+                              <button
+                                onClick={() => handleDeleteComment(comment.id)}
+                                className="p-1 rounded text-muted-foreground hover:text-red-500 hover:bg-red-500/10 transition-colors"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                        <p className="mt-2 text-sm text-foreground whitespace-pre-line">{comment.content}</p>
+                        {comment.images && comment.images.length > 0 && (
+                          <div className="flex gap-2 mt-3">
+                            {comment.images.map((img, i) => (
+                              <button
+                                key={i}
+                                onClick={() => setImageViewer(img)}
+                                className="w-20 h-20 rounded-lg overflow-hidden border border-border hover:border-primary/30 transition-colors"
+                              >
+                                <img src={img} alt="" className="w-full h-full object-cover" />
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
+          {/* 图片查看器 */}
+          {imageViewer && (
+            <div
+              className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-8"
+              onClick={() => setImageViewer(null)}
+            >
+              <img src={imageViewer} alt="" className="max-w-full max-h-full object-contain rounded-lg" />
+              <button
+                onClick={() => setImageViewer(null)}
+                className="absolute top-6 right-6 w-10 h-10 rounded-full bg-white/10 backdrop-blur text-white flex items-center justify-center hover:bg-white/20 transition-colors"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+          )}
 
           {/* Bottom Ads */}
           {bottomAds.length > 0 && (
@@ -475,6 +809,11 @@ export default function ProviderDetailPage() {
         </div>
       </main>
       <Footer />
+      <LoginDialog
+        open={loginDialogOpen}
+        onOpenChange={setLoginDialogOpen}
+        redirectPath={typeof window !== 'undefined' ? window.location.pathname : ''}
+      />
     </div>
   )
 }

@@ -302,6 +302,19 @@ export interface ModelInfo {
 }
 
 // 常用模型列表
+// 中转站评论
+export interface ProviderComment {
+  id: string
+  provider_id: string
+  user_id: string
+  content: string
+  images?: string[]
+  rating: number
+  created_at: string
+  updated_at: string
+  user?: Pick<User, 'id' | 'username' | 'avatar_url' | 'level'>
+}
+
 // 用户建议
 export interface Suggestion {
   id: string

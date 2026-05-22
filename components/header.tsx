@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useState, useEffect } from "react";
-import { Menu, X, User, Coins, Gift } from "lucide-react";
+import { Menu, X, User, Coins, Gift, Home, Globe, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
 import { LoginDialog } from "@/components/login-dialog";
@@ -71,15 +71,24 @@ export function Header() {
           <nav className="hidden items-center gap-6 md:flex">
             <Link
               href="/"
-              className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+              className="text-sm text-muted-foreground transition-colors hover:text-foreground inline-flex items-center gap-1"
             >
+              <Home className="h-4 w-4" />
               首页
             </Link>
             <Link
               href="/providers"
-              className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+              className="text-sm text-muted-foreground transition-colors hover:text-foreground inline-flex items-center gap-1"
             >
+              <Globe className="h-4 w-4" />
               中转站
+            </Link>
+            <Link
+              href="/comments"
+              className="text-sm text-muted-foreground transition-colors hover:text-foreground inline-flex items-center gap-1"
+            >
+              <MessageSquare className="h-4 w-4" />
+              评论广场
             </Link>
             <Link
               href="/trials"
@@ -140,11 +149,28 @@ export function Header() {
         <div className="border-t border-border bg-background px-4 py-4 md:hidden">
           <nav className="flex flex-col gap-4">
             <Link
-              href="/providers"
-              className="text-sm text-muted-foreground"
+              href="/"
+              className="text-sm text-muted-foreground inline-flex items-center gap-1"
               onClick={() => setMobileMenuOpen(false)}
             >
+              <Home className="h-4 w-4" />
+              首页
+            </Link>
+            <Link
+              href="/providers"
+              className="text-sm text-muted-foreground inline-flex items-center gap-1"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              <Globe className="h-4 w-4" />
               中转站
+            </Link>
+            <Link
+              href="/comments"
+              className="text-sm text-muted-foreground inline-flex items-center gap-1"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              <MessageSquare className="h-4 w-4" />
+              评论广场
             </Link>
             <Link
               href="/trials"

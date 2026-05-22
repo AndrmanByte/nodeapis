@@ -447,3 +447,22 @@ ALTER TABLE provider_submissions ADD COLUMN IF NOT EXISTS short_description TEXT
 
 -- 添加积分消耗字段（试用活动）
 ALTER TABLE trial_offers ADD COLUMN IF NOT EXISTS points_cost INTEGER DEFAULT 0;
+
+-- 中转站评论表
+CREATE TABLE IF NOT EXISTS provider_comments (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  provider_id UUID NOT NULL REFERENCES providers(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  content TEXT NOT NULL,
+  images TEXT[] DEFAULT '{}',
+  rating INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_provider_comments_provider_id ON provider_comments(provider_id);
+CREATE INDEX IF NOT EXISTS idx_provider_comments_user_id ON provider_comments(user_id);
+ALTER TABLE provider_comments ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Allow public read comments" ON provider_comments FOR SELECT USING (true);
+CREATE POLICY "Allow insert comments" ON provider_comments FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users delete own comments" ON provider_comments FOR DELETE USING (auth.uid() = user_id);
