@@ -180,17 +180,12 @@ export function AnalyticsDashboard() {
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold">网站统计</h2>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={() => setIframeMode(false)}>
-              切换视图
-            </Button>
-            <Button variant="outline" size="sm" asChild>
-              <a href={shareUrl} target="_blank" rel="noopener noreferrer">
-                <ExternalLink className="h-4 w-4 mr-1" />
-                新窗口打开
-              </a>
-            </Button>
-          </div>
+          <Button variant="outline" size="sm" asChild>
+            <a href={shareUrl} target="_blank" rel="noopener noreferrer">
+              <ExternalLink className="h-4 w-4 mr-1" />
+              新窗口打开
+            </a>
+          </Button>
         </div>
         <div className="w-full h-[800px] rounded-lg overflow-hidden border border-border/50">
           <iframe 
@@ -232,11 +227,6 @@ export function AnalyticsDashboard() {
           <Button variant="outline" size="sm" onClick={loadAllData} disabled={loading}>
             <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
           </Button>
-          {shareUrl && (
-            <Button variant="outline" size="sm" onClick={() => setIframeMode(true)}>
-              完整视图
-            </Button>
-          )}
         </div>
       </div>
 
