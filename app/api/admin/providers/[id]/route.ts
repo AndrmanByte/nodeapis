@@ -12,6 +12,39 @@ async function verifyAdmin(): Promise<boolean> {
   return token.length > 0
 }
 
+// GET - 获取单个中转站（管理端）
+export async function GET(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const isAdmin = await verifyAdmin()
+    if (!isAdmin) {
+      return NextResponse.json({ success: false, error: '未授权' }, { status: 401 })
+    }
+
+    const { id } = await params
+    const supabase = createAdminClient()
+
+    const { data, error } = await supabase
+      .from('providers')
+      .select('*')
+      .eq('id', id)
+      .single()
+
+    if (error) {
+      return NextResponse.json({ success: false, error: error.message }, { status: 500 })
+    }
+
+    return NextResponse.json({ success: true, data })
+  } catch (error) {
+    return NextResponse.json(
+      { success: false, error: '获取数据失败' },
+      { status: 500 }
+    )
+  }
+}
+
 // PUT - 更新中转站
 export async function PUT(
   request: Request,

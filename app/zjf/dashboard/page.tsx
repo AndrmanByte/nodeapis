@@ -83,14 +83,10 @@ export default function AdminDashboard() {
   const [userSearch, setUserSearch] = useState('')
   const [suggestionFilter, setSuggestionFilter] = useState('all')
 
-  const [providerDialogOpen, setProviderDialogOpen] = useState(false)
   const [lotteryDialogOpen, setLotteryDialogOpen] = useState(false)
   const [announcementDialogOpen, setAnnouncementDialogOpen] = useState(false)
   const [modelDialogOpen, setModelDialogOpen] = useState(false)
   const [vendorDialogOpen, setVendorDialogOpen] = useState(false)
-  const [editingProvider, setEditingProvider] = useState<Provider | null>(null)
-  const [providerLogoUrl, setProviderLogoUrl] = useState("")
-  const [providerScreenshotUrl, setProviderScreenshotUrl] = useState("")
   const [editingLottery, setEditingLottery] = useState<LotteryEventWithProvider | null>(null)
   const [editingAnnouncement, setEditingAnnouncement] = useState<Announcement | null>(null)
   const [editingModel, setEditingModel] = useState<Model | null>(null)
@@ -205,52 +201,6 @@ export default function AdminDashboard() {
     await supabase.auth.signOut()
     await fetch('/api/admin/auth', { method: 'DELETE' })
     router.push('/zjf')
-  }
-
-  const handleSaveProvider = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    const form = e.currentTarget
-    const formData = new FormData(form)
-    
-    const providerData = {
-      name: formData.get('name') as string,
-      short_description: formData.get('short_description') as string,
-      description: formData.get('description') as string,
-      website: formData.get('website') as string,
-      logo_url: providerLogoUrl,
-      screenshot_url: providerScreenshotUrl,
-      status: formData.get('status') as string,
-      uptime: parseFloat(formData.get('uptime') as string) || 99.9,
-      rating: parseFloat(formData.get('rating') as string) || 4.5,
-      is_verified: formData.get('is_verified') === 'on',
-      is_featured: formData.get('is_featured') === 'on',
-      features: (formData.get('features') as string)?.split(',').map(f => f.trim()).filter(Boolean) || [],
-      supported_vendors: formData.getAll('supported_vendors') as string[],
-      supported_models: (formData.get('supported_models') as string)?.split(',').map(m => m.trim()).filter(Boolean) || [],
-      api_url: formData.get('api_url') as string || '',
-      contact_email: formData.get('contact_email') as string || '',
-      contact: formData.get('contact') as string || '',
-      register_type: formData.get('register_type') as string || '开放注册',
-      min_deposit: formData.get('min_deposit') as string || '',
-      payment_methods: formData.getAll('payment_methods') as string[],
-      free_trial: formData.get('free_trial') === 'on',
-      advantages: (formData.get('advantages') as string)?.split(',').map(a => a.trim()).filter(Boolean) || [],
-    }
-
-    const url = editingProvider ? `/api/admin/providers/${editingProvider.id}` : '/api/admin/providers'
-    const method = editingProvider ? 'PUT' : 'POST'
-
-    const res = await fetch(url, {
-      method,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(providerData)
-    })
-    const data = await res.json()
-    if (data.success) {
-      loadProviders()
-      setProviderDialogOpen(false)
-      setEditingProvider(null)
-    }
   }
 
   const handleDeleteProvider = async (id: string) => {
@@ -706,88 +656,6 @@ export default function AdminDashboard() {
                 <div className="flex items-center justify-between">
                   <CardTitle>中转站管理</CardTitle>
                   <Button onClick={() => router.push('/zjf/providers/new')} className="gap-2"><Plus className="h-4 w-4" />添加中转站</Button>
-
-                  {/* 编辑中转站弹窗 */}
-                  <Dialog open={providerDialogOpen} onOpenChange={setProviderDialogOpen}>
-                    <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
-                      <DialogHeader><DialogTitle>编辑中转站</DialogTitle></DialogHeader>
-                      <form onSubmit={handleSaveProvider} className="space-y-4">
-                        <div className="grid gap-4 md:grid-cols-2">
-                          <div className="space-y-2"><Label htmlFor="name">名称</Label><Input id="name" name="name" defaultValue={editingProvider?.name} required /></div>
-                          <div className="space-y-2"><Label htmlFor="website">网站</Label><Input id="website" name="website" defaultValue={editingProvider?.website} required /></div>
-                        </div>
-                        <div className="space-y-2"><Label htmlFor="short_description">一句话描述</Label><Input id="short_description" name="short_description" defaultValue={(editingProvider as any)?.short_description || ''} placeholder="用一句话概括服务" /></div>
-                        <div className="space-y-2"><Label htmlFor="description">详细描述</Label><Textarea id="description" name="description" defaultValue={editingProvider?.description} rows={5} /></div>
-                        <div className="grid gap-4 md:grid-cols-2">
-                          <ImageUpload label="Logo 图片" value={providerLogoUrl} onChange={setProviderLogoUrl} hint="正方形图片，建议 200x200" aspect="square" />
-                          <ImageUpload label="官网截图" value={providerScreenshotUrl} onChange={setProviderScreenshotUrl} hint="首页截图，建议 1200x800" aspect="wide" />
-                        </div>
-                        <div className="grid gap-4 md:grid-cols-3">
-                          <div className="space-y-2">
-                            <Label htmlFor="status">状态</Label>
-                            <Select name="status" defaultValue={editingProvider?.status || 'online'}>
-                              <SelectTrigger><SelectValue /></SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="online">在线</SelectItem>
-                                <SelectItem value="offline">离线</SelectItem>
-                                <SelectItem value="maintenance">维护中</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                          <div className="space-y-2"><Label htmlFor="uptime">可用性 (%)</Label><Input id="uptime" name="uptime" type="number" step="0.1" defaultValue={editingProvider?.uptime || 99.9} /></div>
-                          <div className="space-y-2"><Label htmlFor="rating">评分</Label><Input id="rating" name="rating" type="number" step="0.1" min="1" max="5" defaultValue={editingProvider?.rating || 4.5} /></div>
-                        </div>
-                        <div className="space-y-2"><Label htmlFor="features">特性 (逗号分隔)</Label><Input id="features" name="features" defaultValue={editingProvider?.features?.join(', ')} /></div>
-                        <div className="space-y-2">
-                          <Label>支持的厂商</Label>
-                          <div className="flex flex-wrap gap-3">
-                            {vendors.filter(v => v.is_active).map((vendor) => (
-                              <label key={vendor.id} className="flex items-center gap-1.5 text-sm">
-                                <input type="checkbox" name="supported_vendors" value={vendor.name} defaultChecked={editingProvider?.supported_vendors?.includes(vendor.name)} />
-                                {vendor.name}
-                              </label>
-                            ))}
-                          </div>
-                        </div>
-                        <div className="space-y-2"><Label htmlFor="supported_models">支持的模型 (逗号分隔)</Label><Input id="supported_models" name="supported_models" defaultValue={editingProvider?.supported_models?.join(', ')} /></div>
-                        <div className="grid gap-4 md:grid-cols-2">
-                          <div className="space-y-2"><Label htmlFor="api_url">API 地址</Label><Input id="api_url" name="api_url" defaultValue={(editingProvider as any)?.api_url || ''} placeholder="https://api.example.com/v1" /></div>
-                          <div className="space-y-2"><Label htmlFor="register_type">注册方式</Label>
-                            <select id="register_type" name="register_type" defaultValue={(editingProvider as any)?.register_type || '开放注册'} className="w-full h-10 rounded-md border border-border bg-background px-3 text-sm">
-                              <option value="开放注册">开放注册</option>
-                              <option value="邀请码">邀请码</option>
-                              <option value="需审核">需审核</option>
-                            </select>
-                          </div>
-                        </div>
-                        <div className="grid gap-4 md:grid-cols-2">
-                          <div className="space-y-2"><Label htmlFor="contact_email">联系邮箱</Label><Input id="contact_email" name="contact_email" defaultValue={(editingProvider as any)?.contact_email || ''} placeholder="your@email.com" /></div>
-                          <div className="space-y-2"><Label htmlFor="contact">客服联系方式</Label><Input id="contact" name="contact" defaultValue={(editingProvider as any)?.contact || ''} placeholder="Telegram @xxx" /></div>
-                        </div>
-                        <div className="grid gap-4 md:grid-cols-2">
-                          <div className="space-y-2"><Label htmlFor="min_deposit">起充金额</Label><Input id="min_deposit" name="min_deposit" defaultValue={(editingProvider as any)?.min_deposit || ''} placeholder="¥1" /></div>
-                          <div className="space-y-2"><Label htmlFor="advantages">优势亮点 (逗号分隔)</Label><Input id="advantages" name="advantages" defaultValue={(editingProvider as any)?.advantages?.join(', ') || ''} placeholder="全网最低价, 响应快速" /></div>
-                        </div>
-                        <div className="space-y-2">
-                          <Label>付费方式</Label>
-                          <div className="flex flex-wrap gap-3">
-                            {['支付宝', '微信', 'USDT', 'PayPal', '银行卡'].map((method) => (
-                              <label key={method} className="flex items-center gap-1.5 text-sm">
-                                <input type="checkbox" name="payment_methods" value={method} defaultChecked={(editingProvider as any)?.payment_methods?.includes(method)} />
-                                {method}
-                              </label>
-                            ))}
-                          </div>
-                        </div>
-                        <div className="flex gap-4">
-                          <label className="flex items-center gap-2"><input type="checkbox" name="is_verified" defaultChecked={editingProvider?.is_verified} />已认证</label>
-                          <label className="flex items-center gap-2"><input type="checkbox" name="is_featured" defaultChecked={editingProvider?.is_featured} />推荐</label>
-                          <label className="flex items-center gap-2"><input type="checkbox" name="free_trial" defaultChecked={(editingProvider as any)?.free_trial} />免费试用</label>
-                        </div>
-                        <DialogFooter><Button type="submit">保存</Button></DialogFooter>
-                      </form>
-                    </DialogContent>
-                  </Dialog>
                 </div>
                 <div className="flex items-center gap-2 mt-4"><Search className="h-4 w-4 text-muted-foreground" /><Input placeholder="搜索中转站..." value={providerSearch} onChange={(e) => setProviderSearch(e.target.value)} className="max-w-sm" /></div>
               </CardHeader>
@@ -809,7 +677,7 @@ export default function AdminDashboard() {
                         <Button size="sm" variant={provider.is_published === false ? 'default' : 'outline'} className="gap-1" onClick={() => handleTogglePublish(provider.id, provider.is_published !== false)}>
                           {provider.is_published === false ? <><Check className="h-4 w-4" /> 上架</> : <><X className="h-4 w-4" /> 下架</>}
                         </Button>
-                        <Button size="sm" variant="outline" className="gap-1" onClick={() => { setEditingProvider(provider); setProviderLogoUrl(provider.logo_url || ""); setProviderScreenshotUrl(provider.screenshot_url || ""); setProviderDialogOpen(true) }}><Edit className="h-4 w-4" /> 编辑</Button>
+                        <Button size="sm" variant="outline" className="gap-1" onClick={() => router.push(`/zjf/providers/${provider.id}/edit`)}><Edit className="h-4 w-4" /> 编辑</Button>
                         <Button size="sm" variant="destructive" className="gap-1" onClick={() => handleDeleteProvider(provider.id)}><Trash2 className="h-4 w-4" /> 删除</Button>
                       </div>
                     </div>
