@@ -223,6 +223,19 @@ export default function AdminDashboard() {
     }})
   }
 
+  const handleTogglePublish = async (id: string, current: boolean) => {
+    const res = await fetch(`/api/admin/providers/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ is_published: !current })
+    })
+    const data = await res.json()
+    if (data.success) {
+      toast.success(current ? '已下架' : '已上架')
+      loadProviders()
+    }
+  }
+
   const handleUpdateUser = async (id: string, updates: Partial<User>) => {
     const res = await fetch(`/api/admin/users/${id}`, {
       method: 'PUT',
@@ -645,12 +658,16 @@ export default function AdminDashboard() {
                           <Badge variant={provider.status === 'online' ? 'default' : 'secondary'}>{provider.status}</Badge>
                           {provider.is_verified && <Badge variant="outline">认证</Badge>}
                           {provider.is_featured && <Badge className="bg-yellow-500/10 text-yellow-500">推荐</Badge>}
+                          {provider.is_published === false && <Badge variant="outline" className="text-red-500">已下架</Badge>}
                         </div>
                         <p className="text-sm text-muted-foreground">{provider.website}</p>
                       </div>
                       <div className="flex gap-2">
-                        <Button size="sm" variant="outline" onClick={() => { setEditingProvider(provider); setProviderLogoUrl(provider.logo_url || ""); setProviderScreenshotUrl(provider.screenshot_url || ""); setProviderDialogOpen(true) }}><Edit className="h-4 w-4" /></Button>
-                        <Button size="sm" variant="destructive" onClick={() => handleDeleteProvider(provider.id)}><Trash2 className="h-4 w-4" /></Button>
+                        <Button size="sm" variant={provider.is_published === false ? 'default' : 'outline'} className="gap-1" onClick={() => handleTogglePublish(provider.id, provider.is_published !== false)}>
+                          {provider.is_published === false ? <><Check className="h-4 w-4" /> 上架</> : <><X className="h-4 w-4" /> 下架</>}
+                        </Button>
+                        <Button size="sm" variant="outline" className="gap-1" onClick={() => { setEditingProvider(provider); setProviderLogoUrl(provider.logo_url || ""); setProviderScreenshotUrl(provider.screenshot_url || ""); setProviderDialogOpen(true) }}><Edit className="h-4 w-4" /> 编辑</Button>
+                        <Button size="sm" variant="destructive" className="gap-1" onClick={() => handleDeleteProvider(provider.id)}><Trash2 className="h-4 w-4" /> 删除</Button>
                       </div>
                     </div>
                   ))}
@@ -706,7 +723,7 @@ export default function AdminDashboard() {
                           </SelectContent>
                         </Select>
                         <Button size="sm" variant={user.is_active === false ? 'default' : 'outline'} onClick={() => handleUpdateUser(user.id, { is_active: user.is_active === false })}>{user.is_active === false ? '启用' : '禁用'}</Button>
-                        <Button size="sm" variant="destructive" onClick={() => handleDeleteUser(user.id)}><Trash2 className="h-4 w-4" /></Button>
+                        <Button size="sm" variant="destructive" className="gap-1" onClick={() => handleDeleteUser(user.id)}><Trash2 className="h-4 w-4" /> 删除</Button>
                       </div>
                     </div>
                   ))}
@@ -854,8 +871,8 @@ export default function AdminDashboard() {
                         {event.status !== 'drawn' && event.status !== 'cancelled' && (
                           <Button size="sm" className="bg-green-600 hover:bg-green-700" onClick={() => handleDrawLottery(event.id, event.title)}><Trophy className="h-4 w-4 mr-1" />开奖</Button>
                         )}
-                        <Button size="sm" variant="outline" onClick={() => { setEditingLottery(event); setLotteryDialogOpen(true) }}><Edit className="h-4 w-4" /></Button>
-                        <Button size="sm" variant="destructive" onClick={() => handleDeleteLottery(event.id)}><Trash2 className="h-4 w-4" /></Button>
+                        <Button size="sm" variant="outline" className="gap-1" onClick={() => { setEditingLottery(event); setLotteryDialogOpen(true) }}><Edit className="h-4 w-4" /> 编辑</Button>
+                        <Button size="sm" variant="destructive" className="gap-1" onClick={() => handleDeleteLottery(event.id)}><Trash2 className="h-4 w-4" /> 删除</Button>
                       </div>
                     </div>
                   ))}
@@ -916,8 +933,8 @@ export default function AdminDashboard() {
                         <p className="text-sm text-muted-foreground line-clamp-1">{announcement.content}</p>
                       </div>
                       <div className="flex gap-2">
-                        <Button size="sm" variant="outline" onClick={() => { setEditingAnnouncement(announcement); setAnnouncementDialogOpen(true) }}><Edit className="h-4 w-4" /></Button>
-                        <Button size="sm" variant="destructive" onClick={() => handleDeleteAnnouncement(announcement.id)}><Trash2 className="h-4 w-4" /></Button>
+                        <Button size="sm" variant="outline" className="gap-1" onClick={() => { setEditingAnnouncement(announcement); setAnnouncementDialogOpen(true) }}><Edit className="h-4 w-4" /> 编辑</Button>
+                        <Button size="sm" variant="destructive" className="gap-1" onClick={() => handleDeleteAnnouncement(announcement.id)}><Trash2 className="h-4 w-4" /> 删除</Button>
                       </div>
                     </div>
                   ))}
@@ -1040,12 +1057,13 @@ export default function AdminDashboard() {
                               >
                                 <Edit className="h-4 w-4 mr-1" />回复
                               </Button>
-                              <Button 
-                                size="sm" 
-                                variant="destructive" 
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                className="gap-1"
                                 onClick={() => handleDeleteSuggestion(suggestion.id)}
                               >
-                                <Trash2 className="h-4 w-4" />
+                                <Trash2 className="h-4 w-4" /> 删除
                               </Button>
                             </div>
                           </div>
@@ -1107,8 +1125,8 @@ export default function AdminDashboard() {
                         </div>
                       </div>
                       <div className="flex gap-2">
-                        <Button size="sm" variant="outline" onClick={() => { setEditingModel(model); setModelDialogOpen(true) }}><Edit className="h-4 w-4" /></Button>
-                        <Button size="sm" variant="destructive" onClick={() => handleDeleteModel(model.id)}><Trash2 className="h-4 w-4" /></Button>
+                        <Button size="sm" variant="outline" className="gap-1" onClick={() => { setEditingModel(model); setModelDialogOpen(true) }}><Edit className="h-4 w-4" /> 编辑</Button>
+                        <Button size="sm" variant="destructive" className="gap-1" onClick={() => handleDeleteModel(model.id)}><Trash2 className="h-4 w-4" /> 删除</Button>
                       </div>
                     </div>
                   ))}
@@ -1154,8 +1172,8 @@ export default function AdminDashboard() {
                         {!vendor.is_active && <Badge variant="outline" className="text-red-500 text-xs">已停用</Badge>}
                       </div>
                       <div className="flex gap-2">
-                        <Button size="sm" variant="outline" onClick={() => { setEditingVendor(vendor); setVendorDialogOpen(true) }}><Edit className="h-4 w-4" /></Button>
-                        <Button size="sm" variant="destructive" onClick={() => handleDeleteVendor(vendor.id)}><Trash2 className="h-4 w-4" /></Button>
+                        <Button size="sm" variant="outline" className="gap-1" onClick={() => { setEditingVendor(vendor); setVendorDialogOpen(true) }}><Edit className="h-4 w-4" /> 编辑</Button>
+                        <Button size="sm" variant="destructive" className="gap-1" onClick={() => handleDeleteVendor(vendor.id)}><Trash2 className="h-4 w-4" /> 删除</Button>
                       </div>
                     </div>
                   ))}
@@ -1227,8 +1245,8 @@ export default function AdminDashboard() {
                           </div>
                         </div>
                         <div className="flex gap-2 shrink-0">
-                          <Button size="sm" variant="outline" onClick={() => { setEditingAd(ad); setAdLogoUrl(ad.logo_url); setAdPlacement(ad.placement); setAdDialogOpen(true) }}><Edit className="h-4 w-4" /></Button>
-                          <Button size="sm" variant="destructive" onClick={() => handleDeleteAdvertisement(ad.id)}><Trash2 className="h-4 w-4" /></Button>
+                          <Button size="sm" variant="outline" className="gap-1" onClick={() => { setEditingAd(ad); setAdLogoUrl(ad.logo_url); setAdPlacement(ad.placement); setAdDialogOpen(true) }}><Edit className="h-4 w-4" /> 编辑</Button>
+                          <Button size="sm" variant="destructive" className="gap-1" onClick={() => handleDeleteAdvertisement(ad.id)}><Trash2 className="h-4 w-4" /> 删除</Button>
                         </div>
                       </div>
                     ))}
@@ -1289,8 +1307,8 @@ export default function AdminDashboard() {
                           </div>
                         </div>
                         <div className="flex gap-2 shrink-0">
-                          <Button size="sm" variant="outline" onClick={() => { setEditingAd(ad); setAdLogoUrl(ad.logo_url); setAdPlacement(ad.placement); setAdProviderId(ad.provider_id || ""); setAdDialogOpen(true) }}><Edit className="h-4 w-4" /></Button>
-                          <Button size="sm" variant="destructive" onClick={() => handleDeleteAdvertisement(ad.id)}><Trash2 className="h-4 w-4" /></Button>
+                          <Button size="sm" variant="outline" className="gap-1" onClick={() => { setEditingAd(ad); setAdLogoUrl(ad.logo_url); setAdPlacement(ad.placement); setAdProviderId(ad.provider_id || ""); setAdDialogOpen(true) }}><Edit className="h-4 w-4" /> 编辑</Button>
+                          <Button size="sm" variant="destructive" className="gap-1" onClick={() => handleDeleteAdvertisement(ad.id)}><Trash2 className="h-4 w-4" /> 删除</Button>
                         </div>
                       </div>
                     ))}
@@ -1351,8 +1369,8 @@ export default function AdminDashboard() {
                           </div>
                         </div>
                         <div className="flex gap-2 shrink-0">
-                          <Button size="sm" variant="outline" onClick={() => { setEditingAd(ad); setAdLogoUrl(ad.logo_url); setAdPlacement(ad.placement); setAdProviderId(ad.provider_id || ""); setAdDialogOpen(true) }}><Edit className="h-4 w-4" /></Button>
-                          <Button size="sm" variant="destructive" onClick={() => handleDeleteAdvertisement(ad.id)}><Trash2 className="h-4 w-4" /></Button>
+                          <Button size="sm" variant="outline" className="gap-1" onClick={() => { setEditingAd(ad); setAdLogoUrl(ad.logo_url); setAdPlacement(ad.placement); setAdProviderId(ad.provider_id || ""); setAdDialogOpen(true) }}><Edit className="h-4 w-4" /> 编辑</Button>
+                          <Button size="sm" variant="destructive" className="gap-1" onClick={() => handleDeleteAdvertisement(ad.id)}><Trash2 className="h-4 w-4" /> 删除</Button>
                         </div>
                       </div>
                     ))}
@@ -1413,8 +1431,8 @@ export default function AdminDashboard() {
                           </div>
                         </div>
                         <div className="flex gap-2 shrink-0">
-                          <Button size="sm" variant="outline" onClick={() => { setEditingAd(ad); setAdLogoUrl(ad.logo_url); setAdPlacement(ad.placement); setAdProviderId(ad.provider_id || ""); setAdDialogOpen(true) }}><Edit className="h-4 w-4" /></Button>
-                          <Button size="sm" variant="destructive" onClick={() => handleDeleteAdvertisement(ad.id)}><Trash2 className="h-4 w-4" /></Button>
+                          <Button size="sm" variant="outline" className="gap-1" onClick={() => { setEditingAd(ad); setAdLogoUrl(ad.logo_url); setAdPlacement(ad.placement); setAdProviderId(ad.provider_id || ""); setAdDialogOpen(true) }}><Edit className="h-4 w-4" /> 编辑</Button>
+                          <Button size="sm" variant="destructive" className="gap-1" onClick={() => handleDeleteAdvertisement(ad.id)}><Trash2 className="h-4 w-4" /> 删除</Button>
                         </div>
                       </div>
                     ))}

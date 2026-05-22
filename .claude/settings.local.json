@@ -23,7 +23,8 @@
       "Bash(nslookup:*)",
       "Bash(pkill -f \"next dev\")",
       "Bash(npx supabase:*)",
-      "Bash(cat D:/3.mine/nodeapis/supabase/migrations/*.sql)"
+      "Bash(cat D:/3.mine/nodeapis/supabase/migrations/*.sql)",
+      "Bash(pnpm dev:*)"
     ]
   }
 }

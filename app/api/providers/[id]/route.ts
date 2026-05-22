@@ -14,6 +14,7 @@ export async function GET(
       .from('providers')
       .select('*')
       .eq('id', id)
+      .neq('is_published', false)
       .single()
 
     if (error) {

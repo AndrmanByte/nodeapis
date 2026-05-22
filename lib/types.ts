@@ -98,6 +98,7 @@ export interface Provider {
   updated_at: string
   is_verified: boolean
   is_featured: boolean
+  is_published: boolean
 }
 
 export interface PricingTier {
