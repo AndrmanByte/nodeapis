@@ -108,7 +108,7 @@ export function Header() {
               <Link href="/login">登录</Link>
             </Button>
           )}
-          <Button size="sm" asChild>
+          <Button variant="ghost" size="sm" asChild>
             <Link href="/submit">提交中转站</Link>
           </Button>
         </div>
@@ -152,7 +152,7 @@ export function Header() {
                   <Link href="/login">登录</Link>
                 </Button>
               )}
-              <Button size="sm" asChild>
+              <Button variant="ghost" size="sm" asChild>
                 <Link href="/submit">提交中转站</Link>
               </Button>
             </div>
