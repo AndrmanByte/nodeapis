@@ -398,11 +398,8 @@ export default function SubmitPage() {
                   {/* Code */}
                   <div className="relative">
                     <p className="text-xs text-muted-foreground mb-2">复制以下代码到你的网站底部</p>
-                    <pre className="p-3 rounded-lg bg-muted text-xs text-foreground overflow-x-auto whitespace-pre-wrap break-all">
-{`<a href="https://nodeapis.com" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border:1px solid #e5e7eb;border-radius:8px;text-decoration:none;">
-  <img src="https://nodeapis.com/icon.svg" alt="NodeAPIs" width="32" height="32" style="border-radius:6px;" />
-  <span style="font-size:14px;font-weight:500;color:#111;">NodeAPIs</span>
-</a>`}</pre>
+                    <pre className="p-2 rounded-lg bg-muted text-[11px] text-foreground overflow-x-auto max-h-20 overflow-y-auto whitespace-pre-wrap break-all">
+{`<a href="https://nodeapis.com" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border:1px solid #e5e7eb;border-radius:8px;text-decoration:none;"><img src="https://nodeapis.com/icon.svg" alt="NodeAPIs" width="32" height="32" style="border-radius:6px;" /><span style="font-size:14px;font-weight:500;color:#111;">NodeAPIs</span></a>`}</pre>
                     <Button
                       size="sm"
                       variant="outline"

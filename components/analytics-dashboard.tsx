@@ -41,13 +41,12 @@ export function AnalyticsDashboard() {
   const [events, setEvents] = useState<MetricItem[]>([])
   const [activeUsers, setActiveUsers] = useState(0)
   const [isDemo, setIsDemo] = useState(false)
-  const [iframeMode, setIframeMode] = useState(false)
-
   const shareUrl = process.env.NEXT_PUBLIC_UMAMI_SHARE_URL
+  const [iframeMode, setIframeMode] = useState(!!shareUrl)
 
   useEffect(() => {
-    loadAllData()
-  }, [range])
+    if (!iframeMode) loadAllData()
+  }, [range, iframeMode])
 
   const loadAllData = async () => {
     setLoading(true)

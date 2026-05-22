@@ -593,12 +593,12 @@ export default function AdminDashboard() {
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <CardTitle>中转站管理</CardTitle>
+                  <Button onClick={() => router.push('/zjf/providers/new')} className="gap-2"><Plus className="h-4 w-4" />添加中转站</Button>
+
+                  {/* 编辑中转站弹窗 */}
                   <Dialog open={providerDialogOpen} onOpenChange={setProviderDialogOpen}>
-                    <DialogTrigger asChild>
-                      <Button onClick={() => { setEditingProvider(null); setProviderLogoUrl(""); setProviderScreenshotUrl("") }} className="gap-2"><Plus className="h-4 w-4" />添加中转站</Button>
-                    </DialogTrigger>
                     <DialogContent className="max-w-2xl">
-                      <DialogHeader><DialogTitle>{editingProvider ? '编辑中转站' : '添加中转站'}</DialogTitle></DialogHeader>
+                      <DialogHeader><DialogTitle>编辑中转站</DialogTitle></DialogHeader>
                       <form onSubmit={handleSaveProvider} className="space-y-4">
                         <div className="grid gap-4 md:grid-cols-2">
                           <div className="space-y-2"><Label htmlFor="name">名称</Label><Input id="name" name="name" defaultValue={editingProvider?.name} required /></div>
