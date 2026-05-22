@@ -12,7 +12,7 @@ export async function GET(
     
     const { data, error } = await supabase
       .from('providers')
-      .select('*')
+      .select('*, trial_offers(*)')
       .eq('id', id)
       .neq('is_published', false)
       .single()

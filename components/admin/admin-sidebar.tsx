@@ -4,13 +4,13 @@ import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 import {
   BarChart3, Store, Users, Gift, Megaphone, FileText,
-  MessageSquare, Cpu, Building2, MonitorSpeaker, LogOut, Menu, X
+  MessageSquare, Cpu, Building2, MonitorSpeaker, LogOut, Menu, X, Sparkles, ArrowLeft
 } from "lucide-react"
 
 export type AdminSection =
   | "analytics" | "providers" | "users" | "lottery"
   | "announcements" | "submissions" | "suggestions"
-  | "models" | "vendors" | "ads"
+  | "models" | "vendors" | "ads" | "trials"
 
 interface MenuItem {
   id: AdminSection
@@ -38,6 +38,7 @@ export function AdminSidebar({
     { id: "providers", label: "中转站", icon: <Store className="h-4 w-4" /> },
     { id: "users", label: "用户管理", icon: <Users className="h-4 w-4" /> },
     { id: "lottery", label: "抽奖活动", icon: <Gift className="h-4 w-4" /> },
+    { id: "trials", label: "试用管理", icon: <Sparkles className="h-4 w-4" /> },
     { id: "announcements", label: "公告管理", icon: <Megaphone className="h-4 w-4" /> },
     { id: "submissions", label: "审核管理", icon: <FileText className="h-4 w-4" />, badge: pendingSubmissions },
     { id: "suggestions", label: "用户建议", icon: <MessageSquare className="h-4 w-4" />, badge: pendingSuggestions },
@@ -90,8 +91,15 @@ export function AdminSidebar({
         ))}
       </nav>
 
-      {/* Logout */}
-      <div className="p-3 border-t border-border/50">
+      {/* Bottom actions */}
+      <div className="p-3 border-t border-border/50 space-y-1">
+        <a
+          href="/"
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-muted-foreground hover:bg-muted/50 hover:text-foreground transition-colors"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          <span>返回首页</span>
+        </a>
         <button
           onClick={onLogout}
           className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-muted-foreground hover:bg-muted/50 hover:text-foreground transition-colors"

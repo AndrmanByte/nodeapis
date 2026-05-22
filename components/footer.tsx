@@ -67,6 +67,11 @@ export function Footer() {
                 </Link>
               </li>
               <li>
+                <Link href="/trials" className="text-sm text-green-600 transition-colors hover:text-green-700 font-medium">
+                  免费试用
+                </Link>
+              </li>
+              <li>
                 <Link href="/submit" className="text-sm text-muted-foreground transition-colors hover:text-foreground">
                   提交中转站
                 </Link>

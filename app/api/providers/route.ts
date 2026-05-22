@@ -13,7 +13,7 @@ export async function GET(request: Request) {
     
     let query = supabase
       .from('providers')
-      .select('*')
+      .select('*, trial_offers(*)')
       .neq('is_published', false)
       .order('is_featured', { ascending: false })
       .order('rating', { ascending: false })

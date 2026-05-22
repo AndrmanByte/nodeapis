@@ -9,13 +9,13 @@ import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { createClient } from '@/lib/supabase/client'
-import type { User, Provider, ProviderSubmission, Notification } from '@/lib/types'
-import { 
-  User as UserIcon, 
-  Store, 
-  FileText, 
-  Bell, 
-  Settings, 
+import type { User, Provider, ProviderSubmission, Notification, TrialOffer } from '@/lib/types'
+import {
+  User as UserIcon,
+  Store,
+  FileText,
+  Bell,
+  Settings,
   LogOut,
   Edit,
   Trash2,
@@ -23,8 +23,13 @@ import {
   Check,
   X,
   Clock,
-  ArrowLeft
+  ArrowLeft,
+  Gift,
+  Plus,
+  Loader2,
 } from "lucide-react"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Textarea } from "@/components/ui/textarea"
 import Link from 'next/link'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
 
@@ -39,6 +44,11 @@ export default function ProfilePage() {
   const [editing, setEditing] = useState(false)
   const [username, setUsername] = useState('')
   const [confirmDialog, setConfirmDialog] = useState<{ open: boolean; title: string; description: string; onConfirm: () => void }>({ open: false, title: '', description: '', onConfirm: () => {} })
+  const [trialDialog, setTrialDialog] = useState<{ open: boolean; providerId: string; providerName: string }>({ open: false, providerId: '', providerName: '' })
+  const [trialForm, setTrialForm] = useState({ amount: '', description: '', expires_at: '', points_cost: '' })
+  const [trialCodesInput, setTrialCodesInput] = useState('')
+  const [trialSubmitting, setTrialSubmitting] = useState(false)
+  const [providerTrials, setProviderTrials] = useState<Record<string, TrialOffer[]>>({})
 
   useEffect(() => {
     checkAuth()
@@ -134,6 +144,75 @@ export default function ProfilePage() {
   const handleLogout = async () => {
     await supabase.auth.signOut()
     router.push('/')
+  }
+
+  const openTrialDialog = async (providerId: string, providerName: string) => {
+    setTrialDialog({ open: true, providerId, providerName })
+    setTrialForm({ amount: '', description: '', expires_at: '', points_cost: '' })
+    // 加载该店铺已有的试用活动
+    try {
+      const res = await fetch(`/api/providers/${providerId}/trials`)
+      const data = await res.json()
+      if (data.success) {
+        setProviderTrials(prev => ({ ...prev, [providerId]: data.data || [] }))
+      }
+    } catch {}
+  }
+
+  const parseTrialCodes = (input: string): string[] => {
+    return input.split(/[\n,，;；\s]+/).map(c => c.trim()).filter(c => c.length > 0)
+  }
+
+  const handleCreateTrial = async () => {
+    if (!trialForm.amount.trim()) return
+    setTrialSubmitting(true)
+    try {
+      const codes = parseTrialCodes(trialCodesInput)
+      const res = await fetch(`/api/providers/${trialDialog.providerId}/trials`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...trialForm,
+          points_cost: parseInt(trialForm.points_cost) || 0,
+          codes,
+        }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        setProviderTrials(prev => ({
+          ...prev,
+          [trialDialog.providerId]: [data.data, ...(prev[trialDialog.providerId] || [])],
+        }))
+        setTrialForm({ amount: '', description: '', expires_at: '', points_cost: '' })
+        setTrialCodesInput('')
+      }
+    } catch (error) {
+      console.error('Create trial error:', error)
+    } finally {
+      setTrialSubmitting(false)
+    }
+  }
+
+  const handleDeleteTrial = async (providerId: string, trialId: string) => {
+    setConfirmDialog({
+      open: true,
+      title: '删除试用活动',
+      description: '确定要删除这个试用活动吗？',
+      onConfirm: async () => {
+        try {
+          const res = await fetch(`/api/providers/${providerId}/trials/${trialId}`, { method: 'DELETE' })
+          const data = await res.json()
+          if (data.success) {
+            setProviderTrials(prev => ({
+              ...prev,
+              [providerId]: (prev[providerId] || []).filter(t => t.id !== trialId),
+            }))
+          }
+        } catch (error) {
+          console.error('Delete trial error:', error)
+        }
+      },
+    })
   }
 
   const getRoleBadge = (role: string) => {
@@ -297,12 +376,16 @@ export default function ProfilePage() {
                               <ExternalLink className="h-4 w-4" />
                             </a>
                           </Button>
+                          <Button size="sm" variant="outline" className="gap-1 text-green-600 border-green-500/30 hover:bg-green-500/10" onClick={() => openTrialDialog(provider.id, provider.name)}>
+                            <Gift className="h-4 w-4" />
+                            试用
+                          </Button>
                           <Button size="sm" variant="outline">
                             <Edit className="h-4 w-4" />
                           </Button>
-                          <Button 
-                            size="sm" 
-                            variant="destructive" 
+                          <Button
+                            size="sm"
+                            variant="destructive"
                             onClick={() => handleDeleteProvider(provider.id)}
                           >
                             <Trash2 className="h-4 w-4" />
@@ -439,6 +522,120 @@ export default function ProfilePage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* 试用活动管理弹窗 */}
+      <Dialog open={trialDialog.open} onOpenChange={(open) => setTrialDialog(prev => ({ ...prev, open }))}>
+        <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Gift className="h-5 w-5 text-green-600" />
+              试用活动管理 - {trialDialog.providerName}
+            </DialogTitle>
+            <DialogDescription>发布和管理该中转站的免费试用活动</DialogDescription>
+          </DialogHeader>
+
+          {/* 发布新试用 */}
+          <div className="space-y-4 border-b border-border pb-5">
+            <h4 className="text-sm font-semibold text-foreground">发布新活动</h4>
+            <div className="grid gap-3">
+              <div>
+                <Label htmlFor="trial-amount">试用金额 *</Label>
+                <Input
+                  id="trial-amount"
+                  placeholder="如: $5, ¥10, 100万Token"
+                  value={trialForm.amount}
+                  onChange={(e) => setTrialForm(prev => ({ ...prev, amount: e.target.value }))}
+                />
+              </div>
+              <div>
+                <Label htmlFor="trial-desc">活动说明</Label>
+                <Input
+                  id="trial-desc"
+                  placeholder="如: 新用户注册即送"
+                  value={trialForm.description}
+                  onChange={(e) => setTrialForm(prev => ({ ...prev, description: e.target.value }))}
+                />
+              </div>
+              <div>
+                <Label htmlFor="trial-codes">兑换码（每行一个或用逗号分隔，支持批量粘贴）</Label>
+                <Textarea
+                  id="trial-codes"
+                  placeholder={"CODE1\nCODE2\nCODE3\n..."}
+                  rows={4}
+                  value={trialCodesInput}
+                  onChange={(e) => setTrialCodesInput(e.target.value)}
+                />
+                {trialCodesInput && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    已解析 <span className="font-medium text-foreground">{parseTrialCodes(trialCodesInput).length}</span> 个码
+                  </p>
+                )}
+              </div>
+              <div>
+                <Label htmlFor="trial-expires">过期时间（可选）</Label>
+                <Input
+                  id="trial-expires"
+                  type="datetime-local"
+                  value={trialForm.expires_at}
+                  onChange={(e) => setTrialForm(prev => ({ ...prev, expires_at: e.target.value }))}
+                />
+              </div>
+              <div>
+                <Label htmlFor="trial-points">领取消耗积分</Label>
+                <Input
+                  id="trial-points"
+                  type="number"
+                  placeholder="0 表示免费领取"
+                  min="0"
+                  value={trialForm.points_cost}
+                  onChange={(e) => setTrialForm(prev => ({ ...prev, points_cost: e.target.value }))}
+                />
+                <p className="text-xs text-muted-foreground mt-1">设为0表示免费领取</p>
+              </div>
+            </div>
+            <Button
+              size="sm"
+              className="bg-green-600 hover:bg-green-700 text-white gap-1.5"
+              onClick={handleCreateTrial}
+              disabled={!trialForm.amount.trim() || trialSubmitting}
+            >
+              {trialSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+              发布
+            </Button>
+          </div>
+
+          {/* 已有试用活动列表 */}
+          <div className="space-y-3">
+            <h4 className="text-sm font-semibold text-foreground">已有活动</h4>
+            {(providerTrials[trialDialog.providerId] || []).length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-4">暂无试用活动</p>
+            ) : (
+              (providerTrials[trialDialog.providerId] || []).map((trial) => (
+                <div key={trial.id} className="flex items-center gap-3 p-3 rounded-lg border border-border bg-muted/30">
+                  <div className="shrink-0 w-12 h-12 rounded-lg bg-green-500/10 flex items-center justify-center">
+                    <span className="text-sm font-bold text-green-600">{trial.amount}</span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium">{trial.amount}</p>
+                    {trial.description && <p className="text-xs text-muted-foreground">{trial.description}</p>}
+                    {trial.expires_at && (
+                      <p className="text-xs text-muted-foreground">
+                        过期: {new Date(trial.expires_at).toLocaleDateString('zh-CN')}
+                      </p>
+                    )}
+                  </div>
+                  <Badge variant={trial.is_active ? 'default' : 'secondary'} className="shrink-0">
+                    {trial.is_active ? '有效' : '已下线'}
+                  </Badge>
+                  <Button size="icon" variant="ghost" className="h-8 w-8 shrink-0" onClick={() => handleDeleteTrial(trialDialog.providerId, trial.id)}>
+                    <Trash2 className="h-4 w-4 text-destructive" />
+                  </Button>
+                </div>
+              ))
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

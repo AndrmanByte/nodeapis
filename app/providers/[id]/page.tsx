@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useParams } from "next/navigation"
+import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
@@ -23,11 +23,16 @@ import {
   Check,
   Send,
   Sparkles,
+  Gift,
+  Coins,
 } from "lucide-react"
-import type { Provider, Advertisement } from "@/lib/types"
+import type { Provider, Advertisement, TrialOffer } from "@/lib/types"
+import { createClient } from "@/lib/supabase/client"
+import { LoginDialog } from "@/components/login-dialog"
 
 export default function ProviderDetailPage() {
   const params = useParams()
+  const router = useRouter()
   const [provider, setProvider] = useState<Provider | null>(null)
   const [loading, setLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
@@ -76,8 +81,53 @@ export default function ProviderDetailPage() {
     return (
       <div className="min-h-screen bg-background">
         <Header />
-        <main className="flex items-center justify-center py-32">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <main className="px-4 py-12 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-7xl">
+            <div className="h-4 w-16 bg-muted rounded animate-pulse mb-8" />
+            <div className="flex gap-8 items-start">
+              <div className="flex-1 min-w-0 space-y-6">
+                <div className="rounded-xl border border-border bg-card overflow-hidden animate-pulse">
+                  <div className="aspect-video bg-muted" />
+                  <div className="p-6 space-y-4">
+                    <div className="flex items-start gap-5">
+                      <div className="w-14 h-14 rounded-xl bg-muted -mt-8 border border-border" />
+                      <div className="flex-1 space-y-2">
+                        <div className="h-6 bg-muted rounded w-1/3" />
+                        <div className="h-5 w-20 bg-muted rounded-full" />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="h-4 bg-muted rounded w-full" />
+                      <div className="h-4 bg-muted rounded w-4/5" />
+                    </div>
+                    <div className="flex gap-2">
+                      <div className="h-6 w-16 bg-muted rounded-full" />
+                      <div className="h-6 w-16 bg-muted rounded-full" />
+                    </div>
+                  </div>
+                </div>
+                <div className="rounded-xl border border-border bg-card p-6 animate-pulse space-y-3">
+                  <div className="h-5 w-24 bg-muted rounded" />
+                  <div className="flex gap-2">
+                    <div className="h-8 w-24 bg-muted rounded-full" />
+                    <div className="h-8 w-24 bg-muted rounded-full" />
+                    <div className="h-8 w-24 bg-muted rounded-full" />
+                  </div>
+                </div>
+              </div>
+              <div className="w-80 shrink-0 space-y-6 hidden lg:block">
+                <div className="rounded-xl border border-border bg-card p-5 animate-pulse space-y-3">
+                  <div className="h-5 w-20 bg-muted rounded" />
+                  <div className="h-10 bg-muted rounded-lg" />
+                  <div className="h-10 bg-muted rounded-lg" />
+                </div>
+                <div className="rounded-xl border border-border bg-card p-5 animate-pulse space-y-3">
+                  <div className="h-5 w-24 bg-muted rounded" />
+                  <div className="h-20 bg-muted rounded-lg" />
+                </div>
+              </div>
+            </div>
+          </div>
         </main>
         <Footer />
       </div>
@@ -92,7 +142,7 @@ export default function ProviderDetailPage() {
           <Globe className="h-16 w-16 mx-auto mb-6 text-muted-foreground/30" />
           <h1 className="text-2xl font-bold text-foreground mb-3">中转站不存在</h1>
           <p className="text-muted-foreground mb-8">该中转站可能已被删除或链接无效</p>
-          <Button asChild><Link href="/providers">返回列表</Link></Button>
+          <Button onClick={() => router.back()}>返回</Button>
         </main>
         <Footer />
       </div>
@@ -105,9 +155,9 @@ export default function ProviderDetailPage() {
       <main className="px-4 py-8 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-6xl">
           {/* Back */}
-          <Link href="/providers" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors mb-6">
-            <ArrowLeft className="h-4 w-4" /> 返回列表
-          </Link>
+          <button onClick={() => router.back()} className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors mb-6">
+            <ArrowLeft className="h-4 w-4" /> 返回
+          </button>
 
           <div className="flex gap-8 items-start">
             {/* Left: Provider Details */}
@@ -116,8 +166,13 @@ export default function ProviderDetailPage() {
               <div className="rounded-xl border border-border bg-card overflow-hidden">
                 {/* Screenshot */}
                 {provider.screenshot_url && (
-                  <div className="aspect-video overflow-hidden bg-muted">
-                    <img src={provider.screenshot_url} alt={`${provider.name} 截图`} className="w-full h-full object-cover object-top" />
+                  <div className="relative aspect-video overflow-hidden bg-muted group">
+                    <img src={provider.screenshot_url} alt={`${provider.name} 截图`} className="w-full h-full object-cover object-top transition-transform duration-300 group-hover:scale-105" />
+                    <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+                      <a href={provider.website} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-white/70 backdrop-blur-[10px] border border-white/30 text-foreground text-sm font-medium shadow-lg hover:bg-white/80 transition-colors pointer-events-auto">
+                        访问官网 <ExternalLink className="h-3.5 w-3.5" />
+                      </a>
+                    </div>
                   </div>
                 )}
                 <div className="p-6">
@@ -130,10 +185,15 @@ export default function ProviderDetailPage() {
                       </div>
                     )}
                     <div className="flex-1 min-w-0">
-                      <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-                        {provider.name}
-                        {provider.is_verified && <CheckCircle2 className="h-5 w-5 text-blue-500 shrink-0" />}
-                      </h1>
+                      <div className="flex items-center justify-between gap-2">
+                        <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
+                          {provider.name}
+                          {provider.is_verified && <CheckCircle2 className="h-5 w-5 text-blue-500 shrink-0" />}
+                        </h1>
+                        <a href={provider.website} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-sm text-primary hover:underline shrink-0">
+                          访问官网 <ExternalLink className="h-3.5 w-3.5" />
+                        </a>
+                      </div>
                       {provider.is_featured && (
                         <Badge className="mt-1.5 bg-primary/10 text-primary border-primary/20">
                           <Zap className="h-3 w-3 mr-1" /> 推荐中转站
@@ -151,18 +211,6 @@ export default function ProviderDetailPage() {
                       ))}
                     </div>
                   )}
-                  <div className="flex gap-3 mt-5">
-                    <Button size="sm" className="gap-1.5" asChild>
-                      <a href={provider.website} target="_blank" rel="noopener noreferrer">
-                        访问官网 <ExternalLink className="h-3.5 w-3.5" />
-                      </a>
-                    </Button>
-                    {provider.api_url && (
-                      <Button size="sm" variant="outline" className="gap-1.5" onClick={() => navigator.clipboard.writeText(provider.api_url!)}>
-                        复制 API 地址
-                      </Button>
-                    )}
-                  </div>
                 </div>
               </div>
 
@@ -243,7 +291,9 @@ export default function ProviderDetailPage() {
                     {provider.api_url && (
                       <div>
                         <p className="text-xs text-muted-foreground mb-1">API 地址</p>
-                        <code className="text-sm bg-muted px-2 py-1 rounded break-all">{provider.api_url}</code>
+                        <a href={provider.api_url} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline break-all">
+                          {provider.api_url}
+                        </a>
                       </div>
                     )}
                     {provider.register_type && (
@@ -310,15 +360,20 @@ export default function ProviderDetailPage() {
                 </a>
               ))}
 
+              {/* Trial Offers */}
+              {provider.trial_offers && provider.trial_offers.filter((t) => t.is_active && (!t.expires_at || t.expires_at > new Date().toISOString())).length > 0 && (
+                <TrialOffersSection offers={provider.trial_offers.filter((t) => t.is_active && (!t.expires_at || t.expires_at > new Date().toISOString()))} />
+              )}
+
               {/* Submit Your Site */}
               <div className="rounded-xl border border-border bg-card p-5">
                 <div className="flex items-center gap-2 mb-3">
-                  <Send className="h-4 w-4 text-primary" />
-                  <h3 className="font-semibold text-foreground">提交你的站点</h3>
+                  <Send className="h-4 w-4 text-muted-foreground" />
+                  <h3 className="font-semibold text-foreground text-sm">提交你的站点</h3>
                 </div>
-                <p className="text-xs text-muted-foreground mb-4">让更多人发现你的AI API中转服务</p>
-                <Button size="sm" className="w-full" asChild>
-                  <Link href="/submit">立即提交</Link>
+                <p className="text-xs text-muted-foreground mb-3">让更多人发现你的AI API中转服务</p>
+                <Button size="sm" variant="outline" className="w-full" asChild>
+                  <Link href="/submit">提交</Link>
                 </Button>
               </div>
 
@@ -404,6 +459,148 @@ export default function ProviderDetailPage() {
         </div>
       </main>
       <Footer />
+    </div>
+  )
+}
+
+function TrialOffersSection({ offers }: { offers: Provider['trial_offers'] }) {
+  const [claimingId, setClaimingId] = useState<string | null>(null)
+  const [claimedCodes, setClaimedCodes] = useState<Record<string, string>>({})
+  const [errors, setErrors] = useState<Record<string, string>>({})
+  const [copiedId, setCopiedId] = useState<string | null>(null)
+  const [showLoginDialog, setShowLoginDialog] = useState(false)
+  const [pendingTrialId, setPendingTrialId] = useState<string | null>(null)
+
+  const supabase = createClient()
+
+  // 页面加载时检查是否有待领取的试用
+  useEffect(() => {
+    const storedTrialId = localStorage.getItem('pendingClaimTrialId')
+    if (storedTrialId) {
+      localStorage.removeItem('pendingClaimTrialId')
+      // 验证用户已登录后自动领取
+      supabase.auth.getUser().then(({ data }) => {
+        if (data.user) {
+          handleClaim(storedTrialId)
+        }
+      })
+    }
+  }, [])
+
+  const handleClaim = async (trialId: string) => {
+    // 先检查是否已登录
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      // 未登录，存储待领取信息并弹出登录框
+      localStorage.setItem('pendingClaimTrialId', trialId)
+      setPendingTrialId(trialId)
+      setShowLoginDialog(true)
+      return
+    }
+
+    setClaimingId(trialId)
+    setErrors(prev => ({ ...prev, [trialId]: '' }))
+    try {
+      const res = await fetch(`/api/trials/${trialId}/claim`, { method: 'POST' })
+      const data = await res.json()
+      if (data.success) {
+        setClaimedCodes(prev => ({ ...prev, [trialId]: data.data.code }))
+      } else {
+        setErrors(prev => ({ ...prev, [trialId]: data.error || '领取失败' }))
+      }
+    } catch {
+      setErrors(prev => ({ ...prev, [trialId]: '网络错误' }))
+    } finally {
+      setClaimingId(null)
+    }
+  }
+
+  const handleCopy = (trialId: string, code: string) => {
+    navigator.clipboard.writeText(code)
+    setCopiedId(trialId)
+    setTimeout(() => setCopiedId(null), 2000)
+  }
+
+  const handleLoginDialogChange = (open: boolean) => {
+    setShowLoginDialog(open)
+    if (!open) {
+      // 关闭登录框时清除待领取状态
+      localStorage.removeItem('pendingClaimTrialId')
+      setPendingTrialId(null)
+    }
+  }
+
+  if (!offers || offers.length === 0) return null
+
+  return (
+    <div className="rounded-xl border border-green-500/30 bg-gradient-to-br from-green-500/5 to-emerald-500/10 overflow-hidden">
+      <div className="p-5">
+        <div className="flex items-center gap-2 mb-4">
+          <div className="w-8 h-8 rounded-lg bg-green-500/15 flex items-center justify-center">
+            <Gift className="h-4 w-4 text-green-600" />
+          </div>
+          <div>
+            <h3 className="font-semibold text-foreground text-sm">免费试用</h3>
+            <p className="text-xs text-muted-foreground">领取兑换码，零成本体验</p>
+          </div>
+        </div>
+        <div className="space-y-2">
+          {offers
+            .sort((a, b) => b.highlight_order - a.highlight_order)
+            .map((trial) => (
+              <div key={trial.id} className="p-3 rounded-lg bg-card border border-border/50">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xl font-bold text-green-600">{trial.amount}</span>
+                  {(trial.points_cost ?? 0) > 0 ? (
+                    <span className="text-xs text-yellow-600 flex items-center gap-0.5">
+                      <Coins className="h-3 w-3" /> {trial.points_cost ?? 0} 积分
+                    </span>
+                  ) : (
+                    <span className="text-xs text-green-600">免费</span>
+                  )}
+                </div>
+                {trial.expires_at && (
+                  <p className="text-xs text-muted-foreground mb-1">
+                    有效至 {new Date(trial.expires_at).toLocaleDateString('zh-CN')}
+                  </p>
+                )}
+                {trial.description && (
+                  <p className="text-xs text-muted-foreground mb-2">{trial.description}</p>
+                )}
+                {claimedCodes[trial.id] ? (
+                  <div className="flex items-center gap-2 p-2 rounded-lg bg-green-500/10 border border-green-500/20">
+                    <code className="text-xs font-mono font-bold text-green-700 flex-1 truncate">{claimedCodes[trial.id]}</code>
+                    <button onClick={() => handleCopy(trial.id, claimedCodes[trial.id])} className="p-0.5 rounded hover:bg-green-500/20 shrink-0">
+                      {copiedId === trial.id ? <Check className="h-3.5 w-3.5 text-green-600" /> : <Copy className="h-3.5 w-3.5 text-green-600" />}
+                    </button>
+                  </div>
+                ) : (
+                  <div>
+                    <Button
+                      size="sm"
+                      className="w-full bg-green-600 hover:bg-green-700 text-white gap-1"
+                      onClick={() => handleClaim(trial.id)}
+                      disabled={claimingId === trial.id}
+                    >
+                      {claimingId === trial.id ? (
+                        <><Loader2 className="h-3.5 w-3.5 animate-spin" /> 领取中</>
+                      ) : (
+                        <><Gift className="h-3.5 w-3.5" /> 点击领取</>
+                      )}
+                    </Button>
+                    {errors[trial.id] && <p className="text-xs text-red-500 mt-1">{errors[trial.id]}</p>}
+                  </div>
+                )}
+              </div>
+            ))}
+        </div>
+      </div>
+
+      <LoginDialog
+        open={showLoginDialog}
+        onOpenChange={handleLoginDialogChange}
+        redirectPath={typeof window !== 'undefined' ? window.location.pathname : ''}
+      />
     </div>
   )
 }

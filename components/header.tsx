@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useState, useEffect } from "react";
-import { Menu, X, User, Coins } from "lucide-react";
+import { Menu, X, User, Coins, Gift } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
 
@@ -61,7 +61,7 @@ export function Header() {
                 NODE<span className="text-primary">APIS</span>
               </span>
               <span className="text-[9px] tracking-[0.5em] text-muted-foreground/60 mt-0.5" style={{ fontFamily: "'Courier New', Consolas, monospace" }}>
-                AI API 中转聚合
+                免费体验 · AI API 中转聚合
               </span>
             </div>
           </Link>
@@ -80,15 +80,16 @@ export function Header() {
               中转站
             </Link>
             <Link
-              href="/pricing"
-              className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+              href="/trials"
+              className="text-sm text-green-600 font-medium transition-colors hover:text-green-700 inline-flex items-center gap-1"
             >
-              比价
+              <Gift className="h-4 w-4" />
+              免费试用
             </Link>
           </nav>
         </div>
 
-        <div className="hidden items-center gap-4 md:flex">
+        <div className="hidden items-center gap-3 md:flex">
           {authLoading ? (
             <div className="h-8 w-24" />
           ) : isLoggedIn ? (
@@ -113,9 +114,6 @@ export function Header() {
               <Link href="/login">登录</Link>
             </Button>
           )}
-          <Button variant="ghost" size="sm" asChild>
-            <Link href="/submit">提交中转站</Link>
-          </Button>
         </div>
 
         <button
@@ -141,27 +139,25 @@ export function Header() {
               中转站
             </Link>
             <Link
-              href="/pricing"
-              className="text-sm text-muted-foreground"
+              href="/trials"
+              className="text-sm text-green-600 font-medium inline-flex items-center gap-1"
               onClick={() => setMobileMenuOpen(false)}
             >
-              比价
+              <Gift className="h-4 w-4" />
+              免费试用
             </Link>
-            <div className="flex flex-col gap-2 pt-4">
+            <div className="flex flex-col gap-2 pt-2">
               {authLoading ? (
                 <div className="h-9" />
               ) : isLoggedIn ? (
                 <Button variant="ghost" size="sm" asChild>
-                  <Link href="/profile">个人中心</Link>
+                  <Link href="/profile" onClick={() => setMobileMenuOpen(false)}>个人中心</Link>
                 </Button>
               ) : (
                 <Button variant="ghost" size="sm" asChild>
-                  <Link href="/login">登录</Link>
+                  <Link href="/login" onClick={() => setMobileMenuOpen(false)}>登录</Link>
                 </Button>
               )}
-              <Button variant="ghost" size="sm" asChild>
-                <Link href="/submit">提交中转站</Link>
-              </Button>
             </div>
           </nav>
         </div>

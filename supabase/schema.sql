@@ -317,6 +317,79 @@ CREATE INDEX IF NOT EXISTS idx_suggestions_user ON suggestions(user_id);
 CREATE INDEX IF NOT EXISTS idx_suggestions_status ON suggestions(status);
 CREATE INDEX IF NOT EXISTS idx_suggestions_category ON suggestions(category);
 
+-- ==================== 免费试用活动表 ====================
+
+CREATE TABLE IF NOT EXISTS trial_offers (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  provider_id UUID NOT NULL REFERENCES providers(id) ON DELETE CASCADE,
+  amount VARCHAR(100) NOT NULL,           -- "$5", "100万Token", "¥10"
+  description TEXT,                        -- "新用户注册即送"
+  points_cost INTEGER DEFAULT 0,           -- 领取所需积分，0为免费
+  is_active BOOLEAN DEFAULT true,
+  highlight_order INTEGER DEFAULT 0,       -- 排序权重，越大越靠前
+  expires_at TIMESTAMP WITH TIME ZONE,     -- 过期时间
+  created_by UUID REFERENCES users(id) ON DELETE SET NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- 兑换码表
+CREATE TABLE IF NOT EXISTS trial_codes (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  trial_offer_id UUID NOT NULL REFERENCES trial_offers(id) ON DELETE CASCADE,
+  code TEXT NOT NULL,
+  status VARCHAR(20) DEFAULT 'available' CHECK (status IN ('available', 'claimed')),
+  claimed_by UUID REFERENCES users(id) ON DELETE SET NULL,
+  claimed_at TIMESTAMP WITH TIME ZONE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_trial_offers_provider ON trial_offers(provider_id);
+CREATE INDEX IF NOT EXISTS idx_trial_offers_active ON trial_offers(is_active) WHERE is_active = true;
+CREATE INDEX IF NOT EXISTS idx_trial_offers_order ON trial_offers(highlight_order DESC);
+CREATE INDEX IF NOT EXISTS idx_trial_codes_offer ON trial_codes(trial_offer_id);
+CREATE INDEX IF NOT EXISTS idx_trial_codes_status ON trial_codes(trial_offer_id, status);
+
+ALTER TABLE trial_offers ENABLE ROW LEVEL SECURITY;
+ALTER TABLE trial_codes ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Allow public read trial_offers" ON trial_offers FOR SELECT USING (is_active = true);
+CREATE POLICY "Authenticated full access trial_offers" ON trial_offers FOR ALL USING (auth.role() = 'authenticated');
+CREATE POLICY "Allow public read trial_codes" ON trial_codes FOR SELECT USING (true);
+CREATE POLICY "Authenticated update trial_codes" ON trial_codes FOR UPDATE USING (auth.role() = 'authenticated');
+
+DROP TRIGGER IF EXISTS update_trial_offers_updated_at ON trial_offers;
+CREATE TRIGGER update_trial_offers_updated_at
+  BEFORE UPDATE ON trial_offers
+  FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at_column();
+
+-- 原子领取兑换码函数（防超卖）
+CREATE OR REPLACE FUNCTION claim_trial_code(
+  p_trial_offer_id UUID,
+  p_user_id UUID
+)
+RETURNS TABLE(code TEXT)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  RETURN QUERY
+  UPDATE trial_codes
+  SET status = 'claimed',
+      claimed_by = p_user_id,
+      claimed_at = NOW()
+  WHERE id = (
+    SELECT tc.id
+    FROM trial_codes tc
+    WHERE tc.trial_offer_id = p_trial_offer_id
+      AND tc.status = 'available'
+    ORDER BY tc.created_at
+    LIMIT 1
+    FOR UPDATE SKIP LOCKED
+  )
+  RETURNING trial_codes.code;
+END;
+$$;
+
 -- ==================== 示例数据 ====================
 
 INSERT INTO providers (name, description, website, status, uptime, rating, features, supported_models, pricing, is_verified, is_featured) VALUES

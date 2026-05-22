@@ -5,6 +5,7 @@ import { Header } from "@/components/header";
 import { Hero } from "@/components/hero";
 import { ProviderList } from "@/components/provider-list";
 import { LotterySection } from "@/components/lottery-section";
+import { TrialSection } from "@/components/trial-section";
 import { Footer } from "@/components/footer";
 import { AnnouncementBanner } from "@/components/announcement";
 import { AdBanner } from "@/components/ad-banner";
@@ -19,6 +20,7 @@ export default function Home() {
       <Header />
       <main>
         <Hero />
+        <TrialSection />
         <LotterySection />
         <ProviderList />
       </main>

@@ -11,13 +11,12 @@ import { Input } from "@/components/ui/input"
 import {
   ExternalLink,
   CheckCircle2,
-  Loader2,
   Search,
   ArrowLeft,
   Zap,
   Globe,
 } from "lucide-react"
-import type { Provider, Vendor } from "@/lib/types"
+import type { Provider, Vendor, TrialOffer } from "@/lib/types"
 
 export default function ProvidersPage() {
   const [providers, setProviders] = useState<Provider[]>([])
@@ -25,6 +24,7 @@ export default function ProvidersPage() {
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedCategory, setSelectedCategory] = useState("全部")
+  const [showTrialOnly, setShowTrialOnly] = useState(false)
 
   useEffect(() => {
     async function fetchData() {
@@ -62,7 +62,8 @@ export default function ProvidersPage() {
       (p.supported_models || []).some((m) =>
         m.toLowerCase().includes(selectedCategory.toLowerCase())
       )
-    return matchSearch && matchCategory
+    const matchTrial = !showTrialOnly || (p.trial_offers && p.trial_offers.some((t) => t.is_active))
+    return matchSearch && matchCategory && matchTrial
   })
 
   const featured = filtered.filter((p) => p.is_featured)
@@ -118,12 +119,42 @@ export default function ProvidersPage() {
                   {vendor.name}
                 </Button>
               ))}
+              <Button
+                variant={showTrialOnly ? "default" : "outline"}
+                size="sm"
+                onClick={() => setShowTrialOnly(!showTrialOnly)}
+                className="rounded-full gap-1"
+              >
+                <span>🎁</span> 有试用
+              </Button>
             </div>
           </div>
 
           {loading ? (
-            <div className="flex items-center justify-center py-20">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="rounded-xl border border-border bg-card overflow-hidden animate-pulse">
+                  <div className="h-44 bg-muted" />
+                  <div className="p-4 space-y-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-lg bg-muted" />
+                      <div className="flex-1 space-y-1.5">
+                        <div className="h-4 bg-muted rounded w-2/3" />
+                        <div className="h-3 bg-muted rounded w-1/3" />
+                      </div>
+                    </div>
+                    <div className="flex gap-1.5">
+                      <div className="h-5 w-14 bg-muted rounded-full" />
+                      <div className="h-5 w-14 bg-muted rounded-full" />
+                      <div className="h-5 w-14 bg-muted rounded-full" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <div className="h-3 bg-muted rounded w-full" />
+                      <div className="h-3 bg-muted rounded w-4/5" />
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           ) : (
             <>
@@ -174,16 +205,24 @@ export default function ProvidersPage() {
   )
 }
 
+function getBestTrial(provider: Provider): TrialOffer | undefined {
+  const now = new Date().toISOString()
+  return (provider.trial_offers || [])
+    .filter((t) => t.is_active && (!t.expires_at || t.expires_at > now))
+    .sort((a, b) => b.highlight_order - a.highlight_order)[0]
+}
+
 function ProviderCard({ provider, featured }: { provider: Provider; featured?: boolean }) {
+  const bestTrial = getBestTrial(provider)
   return (
-    <Link href={`/providers/${provider.id}`} className="group relative overflow-hidden rounded-xl border border-border bg-card transition-all hover:shadow-lg hover:border-primary/30 block">
+    <Link href={`/providers/${provider.id}`} className="relative overflow-hidden rounded-xl border border-border bg-card transition-all hover:shadow-lg hover:border-primary/30 block">
       {/* Screenshot */}
       <div
-        className="relative h-44 overflow-hidden"
+        className="group relative h-44 overflow-hidden"
         style={!provider.screenshot_url ? { background: 'radial-gradient(circle at top left, rgba(255,214,153,0.32), transparent 42%), linear-gradient(135deg, rgba(255,248,237,0.95), rgba(241,228,205,0.88))' } : undefined}
       >
         {provider.screenshot_url ? (
-          <img src={provider.screenshot_url} alt="" className="absolute inset-0 w-full h-full object-cover object-top" />
+          <img src={provider.screenshot_url} alt="" className="absolute inset-0 w-full h-full object-cover object-top transition-transform duration-300 group-hover:scale-105" />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
             <span className="text-4xl font-bold text-primary/30">{provider.name.charAt(0)}</span>
@@ -194,6 +233,13 @@ function ProviderCard({ provider, featured }: { provider: Provider; featured?: b
             <Badge className="bg-primary text-primary-foreground gap-1"><Zap className="h-3 w-3" /> 推荐</Badge>
           </div>
         )}
+        {bestTrial && (
+          <div className="absolute top-2.5 right-2.5">
+            <Badge className="bg-green-500 text-white gap-1 shadow-md">
+              <span>🎁</span> {bestTrial.amount} 免费试用
+            </Badge>
+          </div>
+        )}
         {(provider.features || []).length > 0 && (
           <div className="absolute bottom-2 left-2 flex flex-wrap gap-1">
             {provider.features.slice(0, 3).map((f) => (
@@ -201,6 +247,16 @@ function ProviderCard({ provider, featured }: { provider: Provider; featured?: b
             ))}
           </div>
         )}
+
+        {/* Hover overlay */}
+        <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+          <span
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.open(provider.website, '_blank', 'noopener,noreferrer') }}
+            className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-white/70 backdrop-blur-[10px] border border-white/30 text-foreground text-sm font-medium shadow-lg cursor-pointer hover:bg-white/80 transition-colors pointer-events-auto"
+          >
+            打开官网 <ExternalLink className="h-3.5 w-3.5" />
+          </span>
+        </div>
       </div>
 
       <div className="p-4">
@@ -217,7 +273,7 @@ function ProviderCard({ provider, featured }: { provider: Provider; featured?: b
               {provider.name}
               {provider.is_verified && <CheckCircle2 className="h-4 w-4 text-blue-500 shrink-0" />}
             </h3>
-            <span onClick={(e) => { e.stopPropagation(); window.open(provider.website, '_blank', 'noopener,noreferrer') }} className="inline-flex items-center gap-1 text-xs text-primary hover:underline shrink-0 cursor-pointer">访问官网<ExternalLink className="h-3 w-3" /></span>
+            <span onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.open(provider.website, '_blank', 'noopener,noreferrer') }} className="inline-flex items-center gap-1 text-xs text-primary hover:underline shrink-0 cursor-pointer">打开官网<ExternalLink className="h-3 w-3" /></span>
           </div>
         </div>
 

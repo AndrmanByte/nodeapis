@@ -94,6 +94,7 @@ export interface Provider {
   payment_methods?: string[]
   free_trial?: boolean
   advantages?: string[]
+  trial_offers?: TrialOffer[]
   created_at: string
   updated_at: string
   is_verified: boolean
@@ -105,6 +106,36 @@ export interface PricingTier {
   model: string
   input_price: number
   output_price: number
+}
+
+// 免费试用活动
+export interface TrialOffer {
+  id: string
+  provider_id: string
+  amount: string
+  description?: string
+  points_cost?: number
+  is_active: boolean
+  highlight_order: number
+  expires_at?: string
+  created_by?: string
+  created_at: string
+  updated_at: string
+  // 关联查询时带上
+  provider?: Provider
+  trial_codes?: TrialOfferCode[]
+  available_codes_count?: number
+}
+
+// 兑换码
+export interface TrialOfferCode {
+  id: string
+  trial_offer_id: string
+  code: string
+  status: 'available' | 'claimed'
+  claimed_by?: string
+  claimed_at?: string
+  created_at: string
 }
 
 export interface ProviderInput {

@@ -1,13 +1,14 @@
 "use client"
 
+import Link from "next/link"
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
 import { CheckinCard } from "@/components/checkin-card"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { 
+import {
   Sprout, Leaf, TreeDeciduous, Star, Crown, Trophy, Gem,
-  ArrowRight
+  ArrowRight, ArrowLeft
 } from "lucide-react"
 import { useEffect, useState } from "react"
 import type { Level } from "@/lib/types"
@@ -47,6 +48,12 @@ export default function CheckinPage() {
     <div className="min-h-screen">
       <Header />
       <main className="container mx-auto px-4 py-8">
+        <Link
+          href="/"
+          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors mb-6"
+        >
+          <ArrowLeft className="h-4 w-4" /> 返回首页
+        </Link>
         <div className="mb-8">
           <h1 className="text-3xl font-bold">签到中心</h1>
           <p className="mt-2 text-muted-foreground">

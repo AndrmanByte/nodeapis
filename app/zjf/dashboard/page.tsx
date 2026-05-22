@@ -15,11 +15,11 @@ import { createClient } from '@/lib/supabase/client'
 import { AnalyticsDashboard } from '@/components/analytics-dashboard'
 import { ImageUpload } from '@/components/image-upload'
 import { AdminSidebar, type AdminSection } from '@/components/admin/admin-sidebar'
-import type { Provider, User, LotteryEvent, Announcement, ProviderSubmission, Suggestion, Model, Vendor, Advertisement } from '@/lib/types'
+import type { Provider, User, LotteryEvent, Announcement, ProviderSubmission, Suggestion, Model, Vendor, Advertisement, TrialOffer } from '@/lib/types'
 import { SUGGESTION_CATEGORIES, SUGGESTION_STATUS } from '@/lib/types'
 import { toast } from 'sonner'
 import {
-  Store, Users, Gift, Megaphone, FileText, Plus, Edit, Trash2, Check, X, Search, Coins, MessageSquare, Cpu, Trophy, MonitorSpeaker
+  Store, Users, Gift, Megaphone, FileText, Plus, Edit, Trash2, Check, X, Search, Coins, MessageSquare, Cpu, Trophy, MonitorSpeaker, Sparkles
 } from "lucide-react"
 
 interface LotteryEventWithProvider extends LotteryEvent {
@@ -32,6 +32,21 @@ interface SubmissionWithUser extends ProviderSubmission {
 
 interface SuggestionWithUser extends Suggestion {
   user?: { id: string; email: string; username?: string; avatar?: string }
+}
+
+interface TrialOfferWithProvider {
+  id: string
+  provider_id: string
+  amount: string
+  description?: string
+  points_cost?: number
+  is_active: boolean
+  highlight_order: number
+  expires_at?: string
+  created_by?: string
+  created_at: string
+  updated_at: string
+  provider?: { id: string; name: string; logo_url?: string }
 }
 
 export default function AdminDashboard() {
@@ -50,6 +65,13 @@ export default function AdminDashboard() {
   const [models, setModels] = useState<Model[]>([])
   const [vendors, setVendors] = useState<Vendor[]>([])
   const [advertisements, setAdvertisements] = useState<Advertisement[]>([])
+  const [trials, setTrials] = useState<TrialOfferWithProvider[]>([])
+  const [trialDialogOpen, setTrialDialogOpen] = useState(false)
+  const [editingTrial, setEditingTrial] = useState<TrialOfferWithProvider | null>(null)
+  const [trialCodesInput, setTrialCodesInput] = useState('')
+  const [addCodesDialogOpen, setAddCodesDialogOpen] = useState(false)
+  const [addCodesTarget, setAddCodesTarget] = useState<string | null>(null)
+  const [addCodesInput, setAddCodesInput] = useState('')
   const [adDialogOpen, setAdDialogOpen] = useState(false)
   const [editingAd, setEditingAd] = useState<Advertisement | null>(null)
   const [confirmDialog, setConfirmDialog] = useState<{ open: boolean; title: string; description: string; onConfirm: () => void }>({ open: false, title: '', description: '', onConfirm: () => {} })
@@ -111,7 +133,8 @@ export default function AdminDashboard() {
         loadSuggestions(),
         loadModels(),
         loadVendors(),
-        loadAdvertisements()
+        loadAdvertisements(),
+        loadTrials()
       ])
     } finally {
       setLoading(false)
@@ -170,6 +193,12 @@ export default function AdminDashboard() {
     const res = await fetch('/api/admin/advertisements')
     const data = await res.json()
     if (data.success) setAdvertisements(data.data || [])
+  }
+
+  const loadTrials = async () => {
+    const res = await fetch('/api/admin/trials')
+    const data = await res.json()
+    if (data.success) setTrials(data.data || [])
   }
 
   const handleLogout = async () => {
@@ -531,6 +560,79 @@ export default function AdminDashboard() {
     }})
   }
 
+  const parseCodes = (input: string): string[] => {
+    return input
+      .split(/[\n,，;；\s]+/)
+      .map(c => c.trim())
+      .filter(c => c.length > 0)
+  }
+
+  const handleSaveTrial = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    const form = e.currentTarget
+    const formData = new FormData(form)
+
+    const codes = editingTrial ? [] : parseCodes(trialCodesInput)
+
+    const trialData: Record<string, unknown> = {
+      provider_id: formData.get('provider_id') as string,
+      amount: formData.get('amount') as string,
+      description: formData.get('description') as string,
+      points_cost: parseInt(formData.get('points_cost') as string) || 0,
+      highlight_order: parseInt(formData.get('highlight_order') as string) || 0,
+      expires_at: formData.get('expires_at') as string || null,
+      is_active: (formData.get('is_active') as string) === 'on',
+    }
+
+    if (!editingTrial && codes.length > 0) {
+      trialData.codes = codes
+    }
+
+    const url = editingTrial ? `/api/admin/trials/${editingTrial.id}` : '/api/admin/trials'
+    const method = editingTrial ? 'PUT' : 'POST'
+
+    const res = await fetch(url, {
+      method,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(trialData)
+    })
+    const data = await res.json()
+    if (data.success) {
+      loadTrials()
+      setTrialDialogOpen(false)
+      setEditingTrial(null)
+      setTrialCodesInput('')
+    }
+  }
+
+  const handleAddCodes = async () => {
+    if (!addCodesTarget) return
+    const codes = parseCodes(addCodesInput)
+    if (codes.length === 0) return
+
+    const res = await fetch(`/api/admin/trials/${addCodesTarget}/codes`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ codes })
+    })
+    const data = await res.json()
+    if (data.success) {
+      toast.success(`成功添加 ${data.count} 个兑换码`)
+      loadTrials()
+      setAddCodesDialogOpen(false)
+      setAddCodesInput('')
+      setAddCodesTarget(null)
+    }
+  }
+
+  const handleDeleteTrial = async (id: string) => {
+    setConfirmDialog({ open: true, title: '删除试用活动', description: '确定要删除这个试用活动吗？此操作不可撤销。', onConfirm: async () => {
+      const res = await fetch(`/api/admin/trials/${id}`, { method: 'DELETE' })
+      const data = await res.json()
+      if (data.success) loadTrials()
+    }})
+  }
+
   const filteredProviders = providers.filter(p => p.name.toLowerCase().includes(providerSearch.toLowerCase()))
   const filteredUsers = users.filter(u => u.email.toLowerCase().includes(userSearch.toLowerCase()) || u.username?.toLowerCase().includes(userSearch.toLowerCase()))
   const filteredSuggestions = suggestionFilter === 'all' 
@@ -572,6 +674,7 @@ export default function AdminDashboard() {
               {activeSection === 'models' && '模型管理'}
               {activeSection === 'vendors' && '厂商管理'}
               {activeSection === 'ads' && '广告管理'}
+              {activeSection === 'trials' && '试用管理'}
             </h1>
             <div className="flex items-center gap-3">
               <div className="hidden sm:flex items-center gap-4 text-sm text-muted-foreground">
@@ -1442,6 +1545,163 @@ export default function AdminDashboard() {
               </Card>
             </div>
           }
+
+          {/* 试用管理 */}
+          {activeSection === 'trials' &&
+            <Card className="border-border/50">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle>试用活动管理</CardTitle>
+                  <Dialog open={trialDialogOpen} onOpenChange={setTrialDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button onClick={() => setEditingTrial(null)} className="gap-2"><Plus className="h-4 w-4" />发布试用</Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-lg">
+                      <DialogHeader><DialogTitle>{editingTrial ? '编辑试用活动' : '发布试用活动'}</DialogTitle></DialogHeader>
+                      <form onSubmit={handleSaveTrial} className="space-y-4">
+                        <div className="space-y-2">
+                          <Label>关联中转站 *</Label>
+                          <Select name="provider_id" defaultValue={editingTrial?.provider_id}>
+                            <SelectTrigger><SelectValue placeholder="选择中转站" /></SelectTrigger>
+                            <SelectContent>
+                              {providers.map(p => (
+                                <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="trial-amount">试用金额 *</Label>
+                          <Input id="trial-amount" name="amount" defaultValue={editingTrial?.amount} placeholder="如: $5, ¥10, 100万Token" required />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="trial-desc">活动说明</Label>
+                          <Input id="trial-desc" name="description" defaultValue={editingTrial?.description || ''} placeholder="如: 新用户注册即送" />
+                        </div>
+                        {!editingTrial && (
+                          <div className="space-y-2">
+                            <Label htmlFor="trial-codes">兑换码（支持批量粘贴，每行一个或用逗号/空格分隔）</Label>
+                            <Textarea
+                              id="trial-codes"
+                              placeholder={"CODE1\nCODE2\nCODE3\n...\n支持一次粘贴10行，自动解析"}
+                              rows={5}
+                              value={trialCodesInput}
+                              onChange={(e) => setTrialCodesInput(e.target.value)}
+                            />
+                            {trialCodesInput && (
+                              <p className="text-xs text-muted-foreground">
+                                已解析 <span className="font-medium text-foreground">{parseCodes(trialCodesInput).length}</span> 个兑换码
+                              </p>
+                            )}
+                          </div>
+                        )}
+                        <div className="grid gap-4 md:grid-cols-2">
+                          <div className="space-y-2">
+                            <Label htmlFor="trial-points">领取消耗积分</Label>
+                            <Input id="trial-points" name="points_cost" type="number" defaultValue={editingTrial?.points_cost || 0} min="0" />
+                            <p className="text-xs text-muted-foreground">设为0表示免费领取</p>
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="trial-order">排序权重</Label>
+                            <Input id="trial-order" name="highlight_order" type="number" defaultValue={editingTrial?.highlight_order || 0} />
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="trial-expires">过期时间</Label>
+                          <Input id="trial-expires" name="expires_at" type="datetime-local" defaultValue={editingTrial?.expires_at?.slice(0, 16) || ''} />
+                        </div>
+                        <div className="flex items-center">
+                          <label className="flex items-center gap-2"><input type="checkbox" name="is_active" defaultChecked={editingTrial?.is_active !== false} />激活</label>
+                        </div>
+                        <DialogFooter><Button type="submit">保存</Button></DialogFooter>
+                      </form>
+                    </DialogContent>
+                  </Dialog>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {trials.map((trial) => {
+                    const totalCodes = trial.trial_codes?.length || 0
+                    const availableCodes = trial.trial_codes?.filter(c => c.status === 'available').length || 0
+                    const claimedCodes = totalCodes - availableCodes
+                    return (
+                    <div key={trial.id} className="flex items-center justify-between p-4 border border-border/50 rounded-lg">
+                      <div className="flex items-center gap-4 min-w-0">
+                        <div className="shrink-0 w-14 h-14 rounded-lg bg-green-500/10 flex items-center justify-center">
+                          <span className="text-lg font-bold text-green-600">{trial.amount}</span>
+                        </div>
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="font-semibold">{trial.amount}</span>
+                            <Badge variant={trial.is_active ? 'default' : 'secondary'}>
+                              {trial.is_active ? '有效' : '已下线'}
+                            </Badge>
+                            {trial.provider && (
+                              <Badge variant="outline" className="text-xs">
+                                {trial.provider.name}
+                              </Badge>
+                            )}
+                            <Badge variant="secondary" className="text-xs gap-1">
+                              码: {availableCodes}/{totalCodes}
+                            </Badge>
+                          </div>
+                          <p className="text-sm text-muted-foreground mt-0.5">
+                            {trial.description || '无说明'} | 权重: {trial.highlight_order}
+                            {(trial.points_cost ?? 0) > 0 && ` | 消耗: ${trial.points_cost}积分`}
+                            {trial.expires_at && ` | 过期: ${new Date(trial.expires_at).toLocaleDateString('zh-CN')}`}
+                            {` | 已领: ${claimedCodes}`}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex gap-2 shrink-0">
+                        <Button size="sm" variant="outline" className="gap-1 text-green-600 border-green-500/30 hover:bg-green-500/10" onClick={() => { setAddCodesTarget(trial.id); setAddCodesDialogOpen(true) }}>
+                          <Plus className="h-4 w-4" /> 加码
+                        </Button>
+                        <Button size="sm" variant="outline" className="gap-1" onClick={() => { setEditingTrial(trial); setTrialDialogOpen(true) }}>
+                          <Edit className="h-4 w-4" /> 编辑
+                        </Button>
+                        <Button size="sm" variant="destructive" className="gap-1" onClick={() => handleDeleteTrial(trial.id)}>
+                          <Trash2 className="h-4 w-4" /> 删除
+                        </Button>
+                      </div>
+                    </div>
+                    )
+                  })}
+                  {trials.length === 0 && <p className="text-center text-muted-foreground py-8">暂无试用活动</p>}
+                </div>
+              </CardContent>
+            </Card>
+          }
+
+          {/* 添加兑换码弹窗 */}
+          <Dialog open={addCodesDialogOpen} onOpenChange={setAddCodesDialogOpen}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>批量添加兑换码</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label>兑换码（每行一个或用逗号/空格分隔）</Label>
+                  <Textarea
+                    placeholder={"CODE1\nCODE2\nCODE3\n...\n支持一次粘贴多行"}
+                    rows={8}
+                    value={addCodesInput}
+                    onChange={(e) => setAddCodesInput(e.target.value)}
+                  />
+                  {addCodesInput && (
+                    <p className="text-xs text-muted-foreground">
+                      已解析 <span className="font-medium text-foreground">{parseCodes(addCodesInput).length}</span> 个兑换码
+                    </p>
+                  )}
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setAddCodesDialogOpen(false)}>取消</Button>
+                <Button onClick={handleAddCodes} disabled={!addCodesInput.trim()}>添加</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
       </main>
 
