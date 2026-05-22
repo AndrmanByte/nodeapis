@@ -114,18 +114,16 @@ export function ProviderList() {
 
 function ProviderCard({ provider, featured }: { provider: Provider; featured?: boolean }) {
   return (
-    <Link href={`/providers/${provider.id}`} className="group relative overflow-hidden rounded-xl border border-border bg-card transition-all hover:shadow-lg hover:border-primary/30 block">
+    <Link href={`/providers/${provider.id}`} className="group relative overflow-hidden rounded-xl border border-border bg-card transition-all hover:shadow-lg hover:border-primary/30 block w-full">
       {/* Screenshot / Banner */}
-      <div className="relative h-40 bg-muted overflow-hidden">
+      <div
+        className="relative h-44 overflow-hidden"
+        style={!provider.screenshot_url ? { background: 'radial-gradient(circle at top left, rgba(255,214,153,0.32), transparent 42%), linear-gradient(135deg, rgba(255,248,237,0.95), rgba(241,228,205,0.88))' } : undefined}
+      >
         {provider.screenshot_url ? (
-          <Image
-            src={provider.screenshot_url}
-            alt={provider.name}
-            fill
-            className="object-cover transition-transform group-hover:scale-105"
-          />
+          <img src={provider.screenshot_url} alt="" className="absolute inset-0 w-full h-full object-cover object-top" />
         ) : (
-          <div className="w-full h-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
+          <div className="w-full h-full flex items-center justify-center">
             <span className="text-4xl font-bold text-primary/30">{provider.name.charAt(0)}</span>
           </div>
         )}
@@ -138,16 +136,6 @@ function ProviderCard({ provider, featured }: { provider: Provider; featured?: b
             </Badge>
           </div>
         )}
-
-        {/* Hover overlay */}
-        <span
-          onClick={(e) => { e.stopPropagation(); window.open(provider.website, '_blank', 'noopener,noreferrer') }}
-          className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
-        >
-          <span className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-white/90 text-sm font-medium text-foreground shadow">
-            访问官网 <ExternalLink className="h-3.5 w-3.5" />
-          </span>
-        </span>
 
         {/* Features on image */}
         {(provider.features || []).length > 0 && (

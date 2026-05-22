@@ -116,7 +116,7 @@ export default function ProviderDetailPage() {
               <div className="rounded-xl border border-border bg-card overflow-hidden">
                 {/* Screenshot */}
                 {provider.screenshot_url && (
-                  <div className="h-48 overflow-hidden bg-muted">
+                  <div className="aspect-video overflow-hidden bg-muted">
                     <img src={provider.screenshot_url} alt={`${provider.name} 截图`} className="w-full h-full object-cover object-top" />
                   </div>
                 )}
