@@ -72,7 +72,7 @@ export default function ProvidersPage() {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <main className="px-4 py-12 sm:px-6 lg:px-8">
+      <main className="px-4 py-12 sm:px-6 lg:px-8 animate-page-enter">
         <div className="mx-auto max-w-7xl">
           {/* Back */}
           {/* Header */}
@@ -208,14 +208,14 @@ function getBestTrial(provider: Provider): TrialOffer | undefined {
 function ProviderCard({ provider, featured }: { provider: Provider; featured?: boolean }) {
   const bestTrial = getBestTrial(provider)
   return (
-    <Link href={`/providers/${provider.id}`} className="relative overflow-hidden rounded-xl border border-border bg-card transition-all hover:shadow-lg hover:border-primary/30 block">
+    <Link href={`/providers/${provider.id}`} className="relative overflow-hidden rounded-xl border border-border bg-card transition-all hover:shadow-lg hover:border-primary/30 block card-hover stagger-item">
       {/* Screenshot */}
       <div
         className="group relative h-44 overflow-hidden"
         style={!provider.screenshot_url ? { background: 'radial-gradient(circle at top left, rgba(255,214,153,0.32), transparent 42%), linear-gradient(135deg, rgba(255,248,237,0.95), rgba(241,228,205,0.88))' } : undefined}
       >
         {provider.screenshot_url ? (
-          <img src={provider.screenshot_url} alt="" className="absolute inset-0 w-full h-full object-cover object-top transition-transform duration-300 group-hover:scale-105" />
+          <img src={provider.screenshot_url} alt="" className="absolute inset-0 w-full h-full object-cover object-top transition-transform duration-[2000ms] group-hover:scale-105" />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
             <span className="text-4xl font-bold text-primary/30">{provider.name.charAt(0)}</span>
@@ -270,6 +270,10 @@ function ProviderCard({ provider, featured }: { provider: Provider; featured?: b
           </div>
         </div>
 
+        {provider.short_description && (
+          <p className="text-sm text-muted-foreground mb-2 line-clamp-1">{provider.short_description}</p>
+        )}
+
         <div className="flex flex-wrap gap-1.5 mb-3">
           {(provider.supported_vendors && provider.supported_vendors.length > 0
             ? provider.supported_vendors
@@ -282,7 +286,7 @@ function ProviderCard({ provider, featured }: { provider: Provider; featured?: b
           )}
         </div>
 
-        <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">{provider.short_description || provider.description}</p>
+        <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">{provider.description}</p>
 
       </div>
     </Link>

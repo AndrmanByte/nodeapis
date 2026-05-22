@@ -2,16 +2,16 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { createClient } from '@/lib/supabase/client'
 import type { User, Provider, ProviderSubmission, Notification, TrialOffer } from '@/lib/types'
 import { LoginDialog } from '@/components/login-dialog'
 import { Header } from '@/components/header'
+import { clearAuthCache } from '@/components/header'
 import {
   User as UserIcon,
   Store,
@@ -30,11 +30,16 @@ import {
   Loader2,
   KeyRound,
   Copy,
+  Home,
+  ChevronRight,
+  Sparkles,
+  Shield,
+  Award,
 } from "lucide-react"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Textarea } from "@/components/ui/textarea"
-import Link from 'next/link'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 export default function ProfilePage() {
   const router = useRouter()
@@ -55,6 +60,7 @@ export default function ProfilePage() {
   const [loginDialogOpen, setLoginDialogOpen] = useState(false)
   const [claimedCodes, setClaimedCodes] = useState<any[]>([])
   const [copiedCodeId, setCopiedCodeId] = useState<string | null>(null)
+  const [activeTab, setActiveTab] = useState('providers')
 
   useEffect(() => {
     checkAuth()
@@ -72,7 +78,6 @@ export default function ProfilePage() {
   const loadUserData = async () => {
     setLoading(true)
     try {
-      // 获取用户信息
       const userRes = await fetch('/api/user')
       const userData = await userRes.json()
       if (userData.success) {
@@ -80,22 +85,18 @@ export default function ProfilePage() {
         setUsername(userData.data.username || '')
       }
 
-      // 获取店铺
       const providersRes = await fetch('/api/user/providers')
       const providersData = await providersRes.json()
       if (providersData.success) setProviders(providersData.data)
 
-      // 获取提交记录
       const submissionsRes = await fetch('/api/user/submissions')
       const submissionsData = await submissionsRes.json()
       if (submissionsData.success) setSubmissions(submissionsData.data)
 
-      // 获取通知
       const notificationsRes = await fetch('/api/notifications')
       const notificationsData = await notificationsRes.json()
       if (notificationsData.success) setNotifications(notificationsData.data)
 
-      // 获取已领取的兑换码
       const codesRes = await fetch('/api/user/claimed-codes')
       const codesData = await codesRes.json()
       if (codesData.success) setClaimedCodes(codesData.data)
@@ -150,7 +151,7 @@ export default function ProfilePage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ is_read: true })
       })
-      setNotifications(notifications.map(n => 
+      setNotifications(notifications.map(n =>
         n.id === id ? { ...n, is_read: true } : n
       ))
     } catch (error) {
@@ -159,6 +160,7 @@ export default function ProfilePage() {
   }
 
   const handleLogout = async () => {
+    clearAuthCache()
     await supabase.auth.signOut()
     router.push('/')
   }
@@ -166,7 +168,6 @@ export default function ProfilePage() {
   const openTrialDialog = async (providerId: string, providerName: string) => {
     setTrialDialog({ open: true, providerId, providerName })
     setTrialForm({ amount: '', description: '', expires_at: '', points_cost: '' })
-    // 加载该店铺已有的试用活动
     try {
       const res = await fetch(`/api/providers/${providerId}/trials`)
       const data = await res.json()
@@ -252,6 +253,16 @@ export default function ProfilePage() {
     return <Badge className={config.className}>{config.label}</Badge>
   }
 
+  const unreadCount = notifications.filter(n => !n.is_read).length
+
+  const sidebarItems = [
+    { id: 'providers', icon: Store, label: '我的店铺', color: 'text-blue-500', count: providers.length },
+    { id: 'codes', icon: KeyRound, label: '兑换码', color: 'text-green-500', count: claimedCodes.length },
+    { id: 'submissions', icon: FileText, label: '提交记录', color: 'text-purple-500', count: submissions.length },
+    { id: 'notifications', icon: Bell, label: '通知', color: 'text-orange-500', count: unreadCount },
+    { id: 'settings', icon: Settings, label: '设置', color: 'text-gray-500' },
+  ]
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
@@ -267,328 +278,347 @@ export default function ProfilePage() {
     <div className="min-h-screen bg-background">
       <Header />
 
-      <main className="container mx-auto px-4 py-8">
-        <div className="max-w-4xl mx-auto space-y-8">
-          {/* 用户信息卡片 */}
-          <Card className="border-border/50">
-            <CardHeader>
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
-                    {user?.avatar_url ? (
-                      <img src={user.avatar_url} alt={user.username || ''} className="h-16 w-16 rounded-full object-cover" />
-                    ) : (
-                      <UserIcon className="h-8 w-8 text-primary" />
-                    )}
+      <main className="px-4 py-8 sm:px-6 lg:px-8 animate-page-enter">
+        <div className="mx-auto max-w-6xl">
+          {/* Gradient header */}
+          <div className="relative rounded-2xl overflow-hidden mb-8 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border border-border">
+            <div className="p-6 sm:p-8">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5">
+                <Avatar className="h-20 w-20 border-4 border-background shadow-lg shrink-0">
+                  <AvatarImage src={user?.avatar_url} />
+                  <AvatarFallback className="text-2xl bg-primary/10 text-primary">
+                    {user?.username?.[0] || user?.email?.[0]?.toUpperCase() || '?'}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1 min-w-0">
+                  {editing ? (
+                    <div className="flex items-center gap-2 mb-2">
+                      <Input value={username} onChange={(e) => setUsername(e.target.value)} className="h-9 max-w-xs" />
+                      <Button size="sm" onClick={handleUpdateProfile}>保存</Button>
+                      <Button size="sm" variant="ghost" onClick={() => setEditing(false)}>取消</Button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2 mb-1">
+                      <h1 className="text-2xl font-bold text-foreground">{user?.username || '未设置昵称'}</h1>
+                      <button onClick={() => setEditing(true)} className="p-1 rounded hover:bg-muted transition-colors">
+                        <Edit className="h-4 w-4 text-muted-foreground" />
+                      </button>
+                      {user && getRoleBadge(user.role)}
+                    </div>
+                  )}
+                  <p className="text-sm text-muted-foreground mb-3">{user?.email}</p>
+                  <div className="flex flex-wrap gap-3">
+                    <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-background border border-border text-sm">
+                      <Sparkles className="h-4 w-4 text-yellow-500" />
+                      <span className="font-semibold">{user?.points || 0}</span>
+                      <span className="text-muted-foreground">积分</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-background border border-border text-sm">
+                      <Award className="h-4 w-4 text-primary" />
+                      <span className="font-semibold">Lv.{user?.level || 1}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-background border border-border text-sm">
+                      <Store className="h-4 w-4 text-blue-500" />
+                      <span className="font-semibold">{providers.length}</span>
+                      <span className="text-muted-foreground">店铺</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-background border border-border text-sm">
+                      <FileText className="h-4 w-4 text-purple-500" />
+                      <span className="font-semibold">{submissions.length}</span>
+                      <span className="text-muted-foreground">提交</span>
+                    </div>
                   </div>
-                  <div>
-                    {editing ? (
-                      <div className="flex items-center gap-2">
-                        <Input
-                          value={username}
-                          onChange={(e) => setUsername(e.target.value)}
-                          className="h-8"
-                        />
-                        <Button size="sm" onClick={handleUpdateProfile}>保存</Button>
-                        <Button size="sm" variant="ghost" onClick={() => setEditing(false)}>取消</Button>
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-2">
-                        <CardTitle>{user?.username || '未设置昵称'}</CardTitle>
-                        <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => setEditing(true)}>
-                          <Edit className="h-3 w-3" />
-                        </Button>
-                      </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Content with sidebar */}
+          <div className="flex gap-6 items-start">
+            {/* Desktop sidebar */}
+            <div className="hidden lg:block w-56 shrink-0 sticky top-24">
+              <nav className="space-y-1">
+                {sidebarItems.map((item) => (
+                  <button
+                    key={item.id}
+                    onClick={() => setActiveTab(item.id)}
+                    className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm transition-colors ${
+                      activeTab === item.id
+                        ? 'bg-primary/10 text-foreground font-medium'
+                        : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                    }`}
+                  >
+                    <item.icon className={`h-4 w-4 ${activeTab === item.id ? item.color : ''}`} />
+                    <span className="flex-1 text-left">{item.label}</span>
+                    {item.count !== undefined && item.count > 0 && (
+                      <span className={`text-xs px-1.5 py-0.5 rounded-full ${
+                        activeTab === item.id ? 'bg-primary/20 text-primary' : 'bg-muted text-muted-foreground'
+                      }`}>{item.count}</span>
                     )}
-                    <CardDescription>{user?.email}</CardDescription>
-                  </div>
-                </div>
-                {user && getRoleBadge(user.role)}
+                  </button>
+                ))}
+              </nav>
+            </div>
+
+            {/* Mobile tabs */}
+            <div className="lg:hidden w-full mb-4 overflow-x-auto">
+              <div className="flex gap-1 p-1 bg-muted/50 rounded-lg min-w-max">
+                {sidebarItems.map((item) => (
+                  <button
+                    key={item.id}
+                    onClick={() => setActiveTab(item.id)}
+                    className={`flex items-center gap-1.5 px-3 py-2 rounded-md text-sm whitespace-nowrap transition-colors ${
+                      activeTab === item.id
+                        ? 'bg-background text-foreground font-medium shadow-sm'
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    <item.icon className={`h-3.5 w-3.5 ${activeTab === item.id ? item.color : ''}`} />
+                    {item.label}
+                    {item.count !== undefined && item.count > 0 && (
+                      <span className="text-xs bg-primary/10 text-primary px-1 rounded-full">{item.count}</span>
+                    )}
+                  </button>
+                ))}
               </div>
-            </CardHeader>
-            <CardContent>
-              <div className="flex gap-6 text-sm text-muted-foreground">
-                <div>
-                  <span className="font-medium text-foreground">{providers.length}</span> 个店铺
-                </div>
-                <div>
-                  <span className="font-medium text-foreground">{submissions.length}</span> 条提交
-                </div>
-                <div>
-                  <span className="font-medium text-foreground">
-                    {notifications.filter(n => !n.is_read).length}
-                  </span> 条未读通知
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+            </div>
 
-          {/* Tabs */}
-          <Tabs defaultValue="providers" className="w-full">
-            <TabsList className="grid w-full grid-cols-5">
-              <TabsTrigger value="providers" className="gap-2">
-                <Store className="h-4 w-4" />
-                我的店铺
-              </TabsTrigger>
-              <TabsTrigger value="codes" className="gap-2">
-                <KeyRound className="h-4 w-4" />
-                兑换码
-              </TabsTrigger>
-              <TabsTrigger value="submissions" className="gap-2">
-                <FileText className="h-4 w-4" />
-                提交记录
-              </TabsTrigger>
-              <TabsTrigger value="notifications" className="gap-2">
-                <Bell className="h-4 w-4" />
-                通知
-                {notifications.filter(n => !n.is_read).length > 0 && (
-                  <Badge variant="destructive" className="ml-1 h-5 w-5 p-0 flex items-center justify-center">
-                    {notifications.filter(n => !n.is_read).length}
-                  </Badge>
-                )}
-              </TabsTrigger>
-              <TabsTrigger value="settings" className="gap-2">
-                <Settings className="h-4 w-4" />
-                设置
-              </TabsTrigger>
-            </TabsList>
-
-            {/* 我的店铺 */}
-            <TabsContent value="providers" className="space-y-4 mt-6">
-              {providers.length === 0 ? (
-                <Card className="border-border/50 border-dashed">
-                  <CardContent className="py-12 text-center">
-                    <Store className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                    <p className="text-muted-foreground mb-4">您还没有店铺</p>
-                    <p className="text-sm text-muted-foreground">提交中转站申请通过后将自动获得商家身份</p>
-                  </CardContent>
-                </Card>
-              ) : (
-                providers.map((provider) => (
-                  <Card key={provider.id} className="border-border/50">
-                    <CardContent className="p-6">
-                      <div className="flex items-start justify-between">
-                        <div className="space-y-2">
-                          <div className="flex items-center gap-2">
-                            <h3 className="font-semibold text-lg">{provider.name}</h3>
-                            <Badge variant={provider.status === 'online' ? 'default' : 'secondary'}>
-                              {provider.status === 'online' ? '在线' : provider.status === 'offline' ? '离线' : '维护中'}
-                            </Badge>
-                            {provider.is_verified && <Badge variant="outline">已认证</Badge>}
-                          </div>
-                          <p className="text-sm text-muted-foreground">{provider.description}</p>
-                          <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                            <span>评分: {provider.rating}</span>
-                            <span>可用性: {provider.uptime}%</span>
-                          </div>
-                        </div>
-                        <div className="flex gap-2">
-                          <Button size="sm" variant="outline" asChild>
-                            <a href={provider.website} target="_blank" rel="noopener noreferrer">
-                              <ExternalLink className="h-4 w-4" />
-                            </a>
-                          </Button>
-                          <Button size="sm" variant="outline" className="gap-1 text-green-600 border-green-500/30 hover:bg-green-500/10" onClick={() => openTrialDialog(provider.id, provider.name)}>
-                            <Gift className="h-4 w-4" />
-                            试用
-                          </Button>
-                          <Button size="sm" variant="outline">
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="destructive"
-                            onClick={() => handleDeleteProvider(provider.id)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))
-              )}
-            </TabsContent>
-
-            {/* 我的兑换码 */}
-            <TabsContent value="codes" className="space-y-4 mt-6">
-              {claimedCodes.length === 0 ? (
-                <Card className="border-border/50 border-dashed">
-                  <CardContent className="py-12 text-center">
-                    <KeyRound className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                    <p className="text-muted-foreground">暂无兑换码</p>
-                    <p className="text-sm text-muted-foreground mt-1">去试用专区领取免费兑换码吧</p>
-                    <Button className="mt-4" size="sm" asChild>
-                      <Link href="/trials">浏览试用活动</Link>
-                    </Button>
-                  </CardContent>
-                </Card>
-              ) : (
-                claimedCodes.map((item: any) => {
-                  const offer = item.trial_offer
-                  const provider = offer?.provider
-                  return (
-                    <Card key={item.id} className="border-border/50">
-                      <CardContent className="p-4">
-                        <div className="flex items-center gap-3">
-                          {provider?.logo_url ? (
-                            <img src={provider.logo_url} alt="" className="w-10 h-10 rounded-lg object-cover shrink-0" />
-                          ) : (
-                            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                              <span className="text-sm font-bold text-primary">{provider?.name?.charAt(0) || '?'}</span>
+            {/* Main content */}
+            <div className="flex-1 min-w-0">
+              {/* Providers tab */}
+              {activeTab === 'providers' && (
+                <div className="animate-fade-in">
+                  {providers.length === 0 ? (
+                    <div className="text-center py-16 rounded-xl border border-dashed border-border">
+                      <Store className="h-12 w-12 mx-auto mb-4 text-muted-foreground/30" />
+                      <p className="text-muted-foreground mb-2">您还没有店铺</p>
+                      <p className="text-sm text-muted-foreground mb-4">提交中转站申请通过后将自动获得商家身份</p>
+                      <Button size="sm" asChild>
+                        <Link href="/submit">提交中转站</Link>
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      {providers.map((provider) => (
+                        <div key={provider.id} className="rounded-xl border border-border bg-card overflow-hidden hover:border-primary/20 transition-colors card-hover stagger-item">
+                          {provider.screenshot_url && (
+                            <div className="h-32 overflow-hidden bg-muted">
+                              <img src={provider.screenshot_url} alt="" className="w-full h-full object-cover object-top" />
                             </div>
                           )}
-                          <div className="flex-1 min-w-0">
-                            <p className="font-medium text-sm">{provider?.name || '未知中转站'}</p>
-                            <p className="text-xs text-muted-foreground">{offer?.amount || ''}</p>
+                          <div className="p-4">
+                            <div className="flex items-center gap-3 mb-3">
+                              {provider.logo_url ? (
+                                <img src={provider.logo_url} alt="" className="w-10 h-10 rounded-lg object-cover shrink-0" />
+                              ) : (
+                                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                                  <span className="text-sm font-bold text-primary">{provider.name.charAt(0)}</span>
+                                </div>
+                              )}
+                              <div className="flex-1 min-w-0">
+                                <h3 className="font-semibold truncate">{provider.name}</h3>
+                                <div className="flex items-center gap-2 mt-0.5">
+                                  <Badge variant={provider.status === 'online' ? 'default' : 'secondary'} className="text-xs">
+                                    {provider.status === 'online' ? '在线' : provider.status === 'offline' ? '离线' : '维护中'}
+                                  </Badge>
+                                  {provider.is_verified && <Badge variant="outline" className="text-xs">已认证</Badge>}
+                                </div>
+                              </div>
+                            </div>
+                            <div className="flex gap-2">
+                              <Button size="sm" variant="outline" className="flex-1 gap-1" asChild>
+                                <a href={provider.website} target="_blank" rel="noopener noreferrer">
+                                  <ExternalLink className="h-3.5 w-3.5" /> 官网
+                                </a>
+                              </Button>
+                              <Button size="sm" variant="outline" className="gap-1 text-green-600 border-green-500/30 hover:bg-green-500/10" onClick={() => openTrialDialog(provider.id, provider.name)}>
+                                <Gift className="h-3.5 w-3.5" /> 试用
+                              </Button>
+                              <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive" onClick={() => handleDeleteProvider(provider.id)}>
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </Button>
+                            </div>
                           </div>
-                          <div className="text-xs text-muted-foreground">
-                            {item.claimed_at && new Date(item.claimed_at).toLocaleDateString('zh-CN')}
-                          </div>
                         </div>
-                        <div className="mt-3 flex items-center gap-2">
-                          <code className="flex-1 px-3 py-2 rounded-lg bg-muted text-sm font-mono select-all">{item.code}</code>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="shrink-0 gap-1.5"
-                            onClick={() => handleCopyCode(item.code, item.id)}
-                          >
-                            {copiedCodeId === item.id ? (
-                              <><Check className="h-3.5 w-3.5 text-green-500" /> 已复制</>
-                            ) : (
-                              <><Copy className="h-3.5 w-3.5" /> 复制</>
-                            )}
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )
-                })
-              )}
-            </TabsContent>
-
-            {/* 提交记录 */}
-            <TabsContent value="submissions" className="space-y-4 mt-6">
-              {submissions.length === 0 ? (
-                <Card className="border-border/50 border-dashed">
-                  <CardContent className="py-12 text-center">
-                    <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                    <p className="text-muted-foreground">暂无提交记录</p>
-                  </CardContent>
-                </Card>
-              ) : (
-                submissions.map((submission) => (
-                  <Card key={submission.id} className="border-border/50">
-                    <CardContent className="p-6">
-                      <div className="flex items-start justify-between">
-                        <div className="space-y-2">
-                          <div className="flex items-center gap-2">
-                            <h3 className="font-semibold">{submission.name}</h3>
-                            {getStatusBadge(submission.status)}
-                          </div>
-                          <p className="text-sm text-muted-foreground">{submission.website}</p>
-                          <p className="text-xs text-muted-foreground">
-                            提交于 {new Date(submission.submitted_at).toLocaleString('zh-CN')}
-                          </p>
-                          {submission.review_notes && (
-                            <p className="text-sm mt-2 p-2 bg-muted/50 rounded">
-                              审核备注: {submission.review_notes}
-                            </p>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-1 text-muted-foreground">
-                          {submission.status === 'pending' && <Clock className="h-5 w-5 text-yellow-500" />}
-                          {submission.status === 'approved' && <Check className="h-5 w-5 text-green-500" />}
-                          {submission.status === 'rejected' && <X className="h-5 w-5 text-red-500" />}
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))
-              )}
-            </TabsContent>
-
-            {/* 通知 */}
-            <TabsContent value="notifications" className="space-y-4 mt-6">
-              {notifications.length === 0 ? (
-                <Card className="border-border/50 border-dashed">
-                  <CardContent className="py-12 text-center">
-                    <Bell className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                    <p className="text-muted-foreground">暂无通知</p>
-                  </CardContent>
-                </Card>
-              ) : (
-                notifications.map((notification) => (
-                  <Card 
-                    key={notification.id} 
-                    className={`border-border/50 cursor-pointer transition-colors ${
-                      !notification.is_read ? 'bg-primary/5' : ''
-                    }`}
-                    onClick={() => !notification.is_read && handleMarkNotificationRead(notification.id)}
-                  >
-                    <CardContent className="p-4">
-                      <div className="flex items-start gap-3">
-                        <div className={`h-2 w-2 rounded-full mt-2 ${
-                          notification.is_read ? 'bg-muted' : 'bg-primary'
-                        }`} />
-                        <div className="flex-1 space-y-1">
-                          <div className="flex items-center justify-between">
-                            <h4 className="font-medium">{notification.title}</h4>
-                            <span className="text-xs text-muted-foreground">
-                              {new Date(notification.created_at).toLocaleString('zh-CN')}
-                            </span>
-                          </div>
-                          <p className="text-sm text-muted-foreground">{notification.content}</p>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))
-              )}
-            </TabsContent>
-
-            {/* 设置 */}
-            <TabsContent value="settings" className="space-y-4 mt-6">
-              <Card className="border-border/50">
-                <CardHeader>
-                  <CardTitle className="text-lg">账号信息</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid gap-4">
-                    <div className="flex items-center justify-between py-2 border-b border-border/50">
-                      <Label>邮箱</Label>
-                      <span className="text-muted-foreground">{user?.email}</span>
+                      ))}
                     </div>
-                    <div className="flex items-center justify-between py-2 border-b border-border/50">
-                      <Label>登录方式</Label>
-                      <Badge variant="outline">{user?.auth_provider}</Badge>
+                  )}
+                </div>
+              )}
+
+              {/* Codes tab */}
+              {activeTab === 'codes' && (
+                <div className="animate-fade-in">
+                  {claimedCodes.length === 0 ? (
+                    <div className="text-center py-16 rounded-xl border border-dashed border-border">
+                      <KeyRound className="h-12 w-12 mx-auto mb-4 text-muted-foreground/30" />
+                      <p className="text-muted-foreground mb-2">暂无兑换码</p>
+                      <p className="text-sm text-muted-foreground mb-4">去试用专区领取免费兑换码吧</p>
+                      <Button size="sm" asChild>
+                        <Link href="/trials">浏览试用活动</Link>
+                      </Button>
                     </div>
-                    <div className="flex items-center justify-between py-2 border-b border-border/50">
-                      <Label>注册时间</Label>
-                      <span className="text-muted-foreground">
-                        {user && new Date(user.created_at).toLocaleString('zh-CN')}
-                      </span>
+                  ) : (
+                    <div className="space-y-3">
+                      {claimedCodes.map((item: any) => {
+                        const offer = item.trial_offer
+                        const provider = offer?.provider
+                        return (
+                          <div key={item.id} className="rounded-xl border border-border bg-card p-4 hover:border-primary/20 transition-colors card-hover">
+                            <div className="flex items-center gap-3 mb-3">
+                              {provider?.logo_url ? (
+                                <img src={provider.logo_url} alt="" className="w-10 h-10 rounded-lg object-cover shrink-0" />
+                              ) : (
+                                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                                  <span className="text-sm font-bold text-primary">{provider?.name?.charAt(0) || '?'}</span>
+                                </div>
+                              )}
+                              <div className="flex-1 min-w-0">
+                                <p className="font-medium text-sm">{provider?.name || '未知中转站'}</p>
+                                <p className="text-xs text-muted-foreground">{offer?.amount || ''}</p>
+                              </div>
+                              <span className="text-xs text-muted-foreground">
+                                {item.claimed_at && new Date(item.claimed_at).toLocaleDateString('zh-CN')}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <code className="flex-1 px-3 py-2 rounded-lg bg-muted text-sm font-mono select-all">{item.code}</code>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="shrink-0 gap-1.5"
+                                onClick={() => handleCopyCode(item.code, item.id)}
+                              >
+                                {copiedCodeId === item.id ? (
+                                  <><Check className="h-3.5 w-3.5 text-green-500" /> 已复制</>
+                                ) : (
+                                  <><Copy className="h-3.5 w-3.5" /> 复制</>
+                                )}
+                              </Button>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Submissions tab */}
+              {activeTab === 'submissions' && (
+                <div className="animate-fade-in">
+                  {submissions.length === 0 ? (
+                    <div className="text-center py-16 rounded-xl border border-dashed border-border">
+                      <FileText className="h-12 w-12 mx-auto mb-4 text-muted-foreground/30" />
+                      <p className="text-muted-foreground">暂无提交记录</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {submissions.map((submission) => (
+                        <div key={submission.id} className="rounded-xl border border-border bg-card p-5 hover:border-primary/20 transition-colors card-hover">
+                          <div className="flex items-start justify-between">
+                            <div className="space-y-2">
+                              <div className="flex items-center gap-2">
+                                <h3 className="font-semibold">{submission.name}</h3>
+                                {getStatusBadge(submission.status)}
+                              </div>
+                              <p className="text-sm text-muted-foreground">{submission.website}</p>
+                              <p className="text-xs text-muted-foreground">
+                                提交于 {new Date(submission.submitted_at).toLocaleString('zh-CN')}
+                              </p>
+                              {submission.review_notes && (
+                                <p className="text-sm mt-2 p-3 bg-muted/50 rounded-lg">
+                                  审核备注: {submission.review_notes}
+                                </p>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-1 text-muted-foreground">
+                              {submission.status === 'pending' && <Clock className="h-5 w-5 text-yellow-500" />}
+                              {submission.status === 'approved' && <Check className="h-5 w-5 text-green-500" />}
+                              {submission.status === 'rejected' && <X className="h-5 w-5 text-red-500" />}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Notifications tab */}
+              {activeTab === 'notifications' && (
+                <div className="animate-fade-in">
+                  {notifications.length === 0 ? (
+                    <div className="text-center py-16 rounded-xl border border-dashed border-border">
+                      <Bell className="h-12 w-12 mx-auto mb-4 text-muted-foreground/30" />
+                      <p className="text-muted-foreground">暂无通知</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {notifications.map((notification) => (
+                        <div
+                          key={notification.id}
+                          className={`rounded-xl border border-border bg-card p-4 cursor-pointer transition-colors hover:border-primary/20 ${
+                            !notification.is_read ? 'bg-primary/5 border-primary/20' : ''
+                          }`}
+                          onClick={() => !notification.is_read && handleMarkNotificationRead(notification.id)}
+                        >
+                          <div className="flex items-start gap-3">
+                            <div className={`h-2 w-2 rounded-full mt-2 shrink-0 ${
+                              notification.is_read ? 'bg-muted' : 'bg-primary'
+                            }`} />
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center justify-between gap-2">
+                                <h4 className="font-medium text-sm">{notification.title}</h4>
+                                <span className="text-xs text-muted-foreground shrink-0">
+                                  {new Date(notification.created_at).toLocaleString('zh-CN')}
+                                </span>
+                              </div>
+                              <p className="text-sm text-muted-foreground mt-1">{notification.content}</p>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Settings tab */}
+              {activeTab === 'settings' && (
+                <div className="animate-fade-in space-y-4">
+                  <div className="rounded-xl border border-border bg-card p-5">
+                    <h3 className="font-semibold text-foreground mb-4">账号信息</h3>
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between py-2 border-b border-border/50">
+                        <Label>邮箱</Label>
+                        <span className="text-muted-foreground text-sm">{user?.email}</span>
+                      </div>
+                      <div className="flex items-center justify-between py-2 border-b border-border/50">
+                        <Label>登录方式</Label>
+                        <Badge variant="outline">{user?.auth_provider}</Badge>
+                      </div>
+                      <div className="flex items-center justify-between py-2 border-b border-border/50">
+                        <Label>注册时间</Label>
+                        <span className="text-muted-foreground text-sm">
+                          {user && new Date(user.created_at).toLocaleString('zh-CN')}
+                        </span>
+                      </div>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
 
-              <Card className="border-border/50">
-                <CardContent className="p-4">
-                  <Button variant="destructive" onClick={handleLogout} className="gap-2 w-full">
+                  <Button variant="destructive" onClick={handleLogout} className="gap-2">
                     <LogOut className="h-4 w-4" />
                     退出登录
                   </Button>
-                </CardContent>
-              </Card>
-
-            </TabsContent>
-          </Tabs>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </main>
 
-      {/* 统一确认弹窗 */}
+      {/* Confirm dialog */}
       <AlertDialog open={confirmDialog.open} onOpenChange={(open) => setConfirmDialog(prev => ({ ...prev, open }))}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -602,7 +632,7 @@ export default function ProfilePage() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* 试用活动管理弹窗 */}
+      {/* Trial dialog */}
       <Dialog open={trialDialog.open} onOpenChange={(open) => setTrialDialog(prev => ({ ...prev, open }))}>
         <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
           <DialogHeader>
@@ -613,37 +643,20 @@ export default function ProfilePage() {
             <DialogDescription>发布和管理该中转站的免费试用活动</DialogDescription>
           </DialogHeader>
 
-          {/* 发布新试用 */}
           <div className="space-y-4 border-b border-border pb-5">
             <h4 className="text-sm font-semibold text-foreground">发布新活动</h4>
             <div className="grid gap-3">
               <div>
                 <Label htmlFor="trial-amount">试用金额 *</Label>
-                <Input
-                  id="trial-amount"
-                  placeholder="如: $5, ¥10, 100万Token"
-                  value={trialForm.amount}
-                  onChange={(e) => setTrialForm(prev => ({ ...prev, amount: e.target.value }))}
-                />
+                <Input id="trial-amount" placeholder="如: $5, ¥10, 100万Token" value={trialForm.amount} onChange={(e) => setTrialForm(prev => ({ ...prev, amount: e.target.value }))} />
               </div>
               <div>
                 <Label htmlFor="trial-desc">活动说明</Label>
-                <Input
-                  id="trial-desc"
-                  placeholder="如: 新用户注册即送"
-                  value={trialForm.description}
-                  onChange={(e) => setTrialForm(prev => ({ ...prev, description: e.target.value }))}
-                />
+                <Input id="trial-desc" placeholder="如: 新用户注册即送" value={trialForm.description} onChange={(e) => setTrialForm(prev => ({ ...prev, description: e.target.value }))} />
               </div>
               <div>
                 <Label htmlFor="trial-codes">兑换码（每行一个或用逗号分隔，支持批量粘贴）</Label>
-                <Textarea
-                  id="trial-codes"
-                  placeholder={"CODE1\nCODE2\nCODE3\n..."}
-                  rows={4}
-                  value={trialCodesInput}
-                  onChange={(e) => setTrialCodesInput(e.target.value)}
-                />
+                <Textarea id="trial-codes" placeholder={"CODE1\nCODE2\nCODE3\n..."} rows={4} value={trialCodesInput} onChange={(e) => setTrialCodesInput(e.target.value)} />
                 {trialCodesInput && (
                   <p className="text-xs text-muted-foreground mt-1">
                     已解析 <span className="font-medium text-foreground">{parseTrialCodes(trialCodesInput).length}</span> 个码
@@ -652,38 +665,20 @@ export default function ProfilePage() {
               </div>
               <div>
                 <Label htmlFor="trial-expires">过期时间（可选）</Label>
-                <Input
-                  id="trial-expires"
-                  type="datetime-local"
-                  value={trialForm.expires_at}
-                  onChange={(e) => setTrialForm(prev => ({ ...prev, expires_at: e.target.value }))}
-                />
+                <Input id="trial-expires" type="datetime-local" value={trialForm.expires_at} onChange={(e) => setTrialForm(prev => ({ ...prev, expires_at: e.target.value }))} />
               </div>
               <div>
                 <Label htmlFor="trial-points">领取消耗积分</Label>
-                <Input
-                  id="trial-points"
-                  type="number"
-                  placeholder="0 表示免费领取"
-                  min="0"
-                  value={trialForm.points_cost}
-                  onChange={(e) => setTrialForm(prev => ({ ...prev, points_cost: e.target.value }))}
-                />
+                <Input id="trial-points" type="number" placeholder="0 表示免费领取" min="0" value={trialForm.points_cost} onChange={(e) => setTrialForm(prev => ({ ...prev, points_cost: e.target.value }))} />
                 <p className="text-xs text-muted-foreground mt-1">设为0表示免费领取</p>
               </div>
             </div>
-            <Button
-              size="sm"
-              className="bg-green-600 hover:bg-green-700 text-white gap-1.5"
-              onClick={handleCreateTrial}
-              disabled={!trialForm.amount.trim() || trialSubmitting}
-            >
+            <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white gap-1.5" onClick={handleCreateTrial} disabled={!trialForm.amount.trim() || trialSubmitting}>
               {trialSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
               发布
             </Button>
           </div>
 
-          {/* 已有试用活动列表 */}
           <div className="space-y-3">
             <h4 className="text-sm font-semibold text-foreground">已有活动</h4>
             {(providerTrials[trialDialog.providerId] || []).length === 0 ? (
@@ -715,6 +710,7 @@ export default function ProfilePage() {
           </div>
         </DialogContent>
       </Dialog>
+
       <LoginDialog
         open={loginDialogOpen}
         onOpenChange={setLoginDialogOpen}

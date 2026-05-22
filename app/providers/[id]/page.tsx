@@ -30,6 +30,7 @@ import {
   Trash2,
   MessageSquare,
   X,
+  Info,
 } from "lucide-react"
 import type { Provider, Advertisement, TrialOffer, ProviderComment } from "@/lib/types"
 import { createClient } from "@/lib/supabase/client"
@@ -273,7 +274,7 @@ export default function ProviderDetailPage() {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <main className="px-4 py-8 sm:px-6 lg:px-8">
+      <main className="px-4 py-8 sm:px-6 lg:px-8 animate-page-enter">
         <div className="mx-auto max-w-6xl">
           {/* Back */}
           <button onClick={() => router.back()} className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors mb-6">
@@ -288,7 +289,7 @@ export default function ProviderDetailPage() {
                 {/* Screenshot */}
                 {provider.screenshot_url && (
                   <div className="relative aspect-video overflow-hidden bg-muted group">
-                    <img src={provider.screenshot_url} alt={`${provider.name} 截图`} className="w-full h-full object-cover object-top transition-transform duration-300 group-hover:scale-105" />
+                    <img src={provider.screenshot_url} alt={`${provider.name} 截图`} className="w-full h-full object-cover object-top transition-transform duration-[2000ms] group-hover:scale-105" />
                     <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
                       <a href={provider.website} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-white/70 backdrop-blur-[10px] border border-white/30 text-foreground text-sm font-medium shadow-lg hover:bg-white/80 transition-colors pointer-events-auto">
                         访问官网 <ExternalLink className="h-3.5 w-3.5" />
@@ -299,9 +300,9 @@ export default function ProviderDetailPage() {
                 <div className="p-6">
                   <div className="flex items-start gap-5">
                     {provider.logo_url ? (
-                      <img src={provider.logo_url} alt={provider.name} className="w-14 h-14 rounded-xl object-cover shrink-0 border border-border -mt-8 bg-card" />
+                      <img src={provider.logo_url} alt={provider.name} className="w-14 h-14 rounded-xl object-cover shrink-0 border border-border -mt-8 bg-card relative z-10" />
                     ) : (
-                      <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 -mt-8 border border-border bg-card">
+                      <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 -mt-8 border border-border bg-card relative z-10">
                         <span className="text-xl font-bold text-primary">{provider.name.charAt(0)}</span>
                       </div>
                     )}
@@ -315,6 +316,9 @@ export default function ProviderDetailPage() {
                           访问官网 <ExternalLink className="h-3.5 w-3.5" />
                         </a>
                       </div>
+                      {provider.short_description && (
+                        <p className="mt-1 text-sm text-muted-foreground">{provider.short_description}</p>
+                      )}
                       {provider.is_featured && (
                         <Badge className="mt-1.5 bg-primary/10 text-primary border-primary/20">
                           <Zap className="h-3 w-3 mr-1" /> 推荐中转站
@@ -322,25 +326,15 @@ export default function ProviderDetailPage() {
                       )}
                     </div>
                   </div>
-                  {provider.short_description && (
-                    <p className="mt-1 text-sm text-muted-foreground">{provider.short_description}</p>
-                  )}
-                  {provider.description && (
-                    <div className="mt-4 text-muted-foreground leading-relaxed">
-                      {provider.description.split(/(?=【[^]+?】)/).map((section, i) => {
-                        const match = section.match(/^【(.+?)】\s*([\s\S]*)$/)
-                        if (match) {
-                          return (
-                            <div key={i} className="mb-4">
-                              <h3 className="font-semibold text-foreground mb-1.5">{match[1]}</h3>
-                              <p className="whitespace-pre-line">{match[2].trim()}</p>
-                            </div>
-                          )
-                        }
-                        return <p key={i} className="mb-2">{section.trim()}</p>
-                      })}
-                    </div>
-                  )}
+                  {provider.description && (() => {
+                    const sections = provider.description.split(/(?=【[^]+?】)/)
+                    const plainParts = sections.filter(s => !s.match(/^【(.+?)】/))
+                    return plainParts.some(s => s.trim()) ? (
+                      <div className="mt-4 text-muted-foreground leading-relaxed">
+                        {plainParts.map((s, i) => s.trim() ? <p key={i} className="mb-2">{s.trim()}</p> : null)}
+                      </div>
+                    ) : null
+                  })()}
                   {provider.advantages && provider.advantages.length > 0 && (
                     <div className="flex flex-wrap gap-2 mt-3">
                       {provider.advantages.map((a) => (
@@ -351,10 +345,117 @@ export default function ProviderDetailPage() {
                 </div>
               </div>
 
+              {/* Description sections: 是什么, 能做什么, 常见问题 etc. */}
+              {provider.description && (() => {
+                const sections = provider.description.split(/(?=【[^]+?】)/)
+                const titledParts = sections.filter(s => s.match(/^【(.+?)】/))
+                if (titledParts.length === 0) return null
+
+                const sectionPatterns: { match: string; icon: React.ReactNode; color: string; bg: string }[] = [
+                  { match: '是什么', icon: <Zap className="h-4 w-4 text-blue-500" />, color: 'text-blue-500', bg: 'bg-blue-500/10' },
+                  { match: '能做什么', icon: <Sparkles className="h-4 w-4 text-green-500" />, color: 'text-green-500', bg: 'bg-green-500/10' },
+                  { match: '常见问题', icon: <MessageSquare className="h-4 w-4 text-purple-500" />, color: 'text-purple-500', bg: 'bg-purple-500/10' },
+                ]
+
+                return titledParts.map((section, i) => {
+                  const match = section.match(/^【(.+?)】\s*([\s\S]*)$/)
+                  if (!match) return null
+                  const title = match[1]
+                  const content = match[2].trim()
+                  const pattern = sectionPatterns.find(p => title.includes(p.match))
+                  const config = pattern || {
+                    icon: <Info className="h-4 w-4 text-gray-500" />,
+                    color: 'text-gray-500',
+                    bg: 'bg-gray-500/10',
+                  }
+                  const sectionType = pattern?.match || title
+
+                  const renderContent = () => {
+                    if (sectionType === '能做什么') {
+                      return (
+                        <div className="grid gap-2.5 sm:grid-cols-2">
+                          {content.split('\n').filter(l => l.trim()).map((line, j) => (
+                            <div key={j} className="flex items-start gap-2.5 p-3 rounded-lg bg-green-500/5 border border-green-500/10">
+                              <Check className="h-4 w-4 text-green-500 mt-0.5 shrink-0" />
+                              <span className="text-sm text-foreground/80 leading-relaxed">{line.replace(/^-\s*/, '').trim()}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )
+                    }
+                    if (sectionType === '常见问题') {
+                      const lines = content.split('\n').filter(l => l.trim())
+                      const qaPairs: { q: string; a: string }[] = []
+                      let current: { q: string; a: string } | null = null
+                      for (const line of lines) {
+                        const clean = line.replace(/^-\s*/, '').trim()
+                        if (clean.startsWith('Q:') || clean.startsWith('问：')) {
+                          if (current) qaPairs.push(current)
+                          current = { q: clean.replace(/^(Q:|问：)\s*/, ''), a: '' }
+                        } else if (clean.startsWith('A:') || clean.startsWith('答：')) {
+                          if (current) current.a = clean.replace(/^(A:|答：)\s*/, '')
+                        } else if (current) {
+                          current.a += (current.a ? '\n' : '') + clean
+                        }
+                      }
+                      if (current) qaPairs.push(current)
+
+                      if (qaPairs.length > 0) {
+                        return (
+                          <div className="space-y-3">
+                            {qaPairs.map((pair, j) => (
+                              <div key={j} className="rounded-lg border border-border/60 overflow-hidden">
+                                <div className="flex items-start gap-2.5 p-3.5 bg-purple-500/5">
+                                  <span className="w-5 h-5 rounded bg-purple-500/15 text-purple-600 flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">Q</span>
+                                  <span className="text-sm font-medium text-foreground leading-relaxed">{pair.q}</span>
+                                </div>
+                                <div className="flex items-start gap-2.5 p-3.5 border-t border-border/40">
+                                  <span className="w-5 h-5 rounded bg-green-500/15 text-green-600 flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">A</span>
+                                  <span className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">{pair.a}</span>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )
+                      }
+                      // Fallback: treat each line as a Q
+                      return (
+                        <div className="space-y-2.5">
+                          {lines.map((line, j) => (
+                            <div key={j} className="flex items-start gap-2.5 p-3 rounded-lg bg-purple-500/5 border border-purple-500/10">
+                              <MessageSquare className="h-4 w-4 text-purple-500 mt-0.5 shrink-0" />
+                              <span className="text-sm text-foreground/80 leading-relaxed">{line.replace(/^-\s*/, '').trim()}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )
+                    }
+                    if (sectionType === '是什么') {
+                      return (
+                        <div className="p-4 rounded-lg bg-blue-500/5 border border-blue-500/10">
+                          <p className="text-sm text-foreground/80 leading-relaxed whitespace-pre-line">{content}</p>
+                        </div>
+                      )
+                    }
+                    return <p className="text-sm text-muted-foreground whitespace-pre-line leading-relaxed">{content}</p>
+                  }
+
+                  return (
+                    <div key={i} className="rounded-xl border border-border bg-card p-6">
+                      <div className="flex items-center gap-2.5 mb-4">
+                        <div className={`w-8 h-8 rounded-lg ${config.bg} flex items-center justify-center`}>{config.icon}</div>
+                        <h2 className="text-lg font-semibold text-foreground">{title}</h2>
+                      </div>
+                      {renderContent()}
+                    </div>
+                  )
+                })
+              })()}
+
               {/* Vendors / Models */}
               <div className="rounded-xl border border-border bg-card p-6">
                 <div className="flex items-center gap-2.5 mb-4">
-                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center"><Globe className="h-4 w-4 text-primary" /></div>
+                  <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center"><Globe className="h-4 w-4 text-blue-500" /></div>
                   <h2 className="text-lg font-semibold text-foreground">
                     {provider.supported_vendors && provider.supported_vendors.length > 0 ? '支持厂商' : '支持模型'}
                   </h2>
@@ -376,7 +477,7 @@ export default function ProviderDetailPage() {
               {provider.pricing && provider.pricing.length > 0 && (
                 <div className="rounded-xl border border-border bg-card p-6">
                   <div className="flex items-center gap-2.5 mb-4">
-                    <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center"><DollarSign className="h-4 w-4 text-primary" /></div>
+                    <div className="w-8 h-8 rounded-lg bg-yellow-500/10 flex items-center justify-center"><DollarSign className="h-4 w-4 text-yellow-500" /></div>
                     <h2 className="text-lg font-semibold text-foreground">价格信息</h2>
                   </div>
                   <div className="overflow-x-auto">
@@ -406,7 +507,7 @@ export default function ProviderDetailPage() {
               {(provider.features || []).length > 0 && (
                 <div className="rounded-xl border border-border bg-card p-6">
                   <div className="flex items-center gap-2.5 mb-4">
-                    <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center"><Tag className="h-4 w-4 text-primary" /></div>
+                    <div className="w-8 h-8 rounded-lg bg-orange-500/10 flex items-center justify-center"><Tag className="h-4 w-4 text-orange-500" /></div>
                     <h2 className="text-lg font-semibold text-foreground">服务特色</h2>
                   </div>
                   <div className="flex flex-wrap gap-2">
@@ -421,7 +522,7 @@ export default function ProviderDetailPage() {
               {(provider.api_url || provider.register_type || provider.contact || provider.min_deposit || (provider.payment_methods && provider.payment_methods.length > 0) || provider.free_trial) && (
                 <div className="rounded-xl border border-border bg-card p-6">
                   <div className="flex items-center gap-2.5 mb-4">
-                    <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center"><Shield className="h-4 w-4 text-primary" /></div>
+                    <div className="w-8 h-8 rounded-lg bg-teal-500/10 flex items-center justify-center"><Shield className="h-4 w-4 text-teal-500" /></div>
                     <h2 className="text-lg font-semibold text-foreground">服务详情</h2>
                   </div>
                   <div className="grid gap-4 sm:grid-cols-2">
@@ -581,8 +682,8 @@ export default function ProviderDetailPage() {
             <div className="p-6 border-b border-border">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                    <MessageSquare className="h-5 w-5 text-primary" />
+                  <div className="w-10 h-10 rounded-lg bg-indigo-500/10 flex items-center justify-center">
+                    <MessageSquare className="h-5 w-5 text-indigo-500" />
                   </div>
                   <div>
                     <h2 className="text-lg font-semibold text-foreground">用户评论 ({commentStats.count})</h2>

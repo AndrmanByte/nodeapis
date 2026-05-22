@@ -25,7 +25,11 @@
       "Bash(npx supabase:*)",
       "Bash(cat D:/3.mine/nodeapis/supabase/migrations/*.sql)",
       "Bash(pnpm dev:*)",
-      "WebSearch"
+      "WebSearch",
+      "Bash(python3 -c \"import sys,json; data=json.load\\(sys.stdin\\); [print\\(p['name'], '→', p.get\\('description',''\\)[:80]\\) for p in data.get\\('data',[]\\)[:5]]\")",
+      "Bash(node -e \"const d=require\\('fs'\\).readFileSync\\('/dev/stdin','utf8'\\);const j=JSON.parse\\(d\\);j.data?.slice\\(0,3\\).forEach\\(p=>console.log\\(p.name,'→',p.description?.substring\\(0,100\\)\\)\\)\")",
+      "Bash(node -e \"let d='';process.stdin.on\\('data',c=>d+=c\\);process.stdin.on\\('end',\\(\\)=>{try{const j=JSON.parse\\(d\\);console.log\\('count:',j.data?.length\\);j.data?.slice\\(0,2\\).forEach\\(p=>console.log\\(p.id,p.name\\)\\)}catch\\(e\\){console.log\\(d.substring\\(0,200\\)\\)}}\\)\")",
+      "Bash(node -e \"let d='';process.stdin.on\\('data',c=>d+=c\\);process.stdin.on\\('end',\\(\\)=>{try{const j=JSON.parse\\(d\\);console.log\\('desc:',j.data?.description?.substring\\(0,300\\)\\)}catch\\(e\\){console.log\\(d.substring\\(0,200\\)\\)}}\\)\")"
     ]
   }
 }

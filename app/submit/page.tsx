@@ -321,8 +321,8 @@ export default function SubmitPage() {
                   <div className="space-y-6">
                     <SectionHeader icon={<Mail className="h-4 w-4 text-primary" />} title="联系方式" desc="用于审核沟通和问题反馈" />
                     <div className="space-y-2">
-                      <label className="text-sm font-medium text-foreground">联系邮箱 <span className="text-destructive">*</span></label>
-                      <Input type="email" placeholder="your@email.com" value={formData.contact_email} onChange={(e) => setFormData({ ...formData, contact_email: e.target.value })} required className="h-11" />
+                      <label className="text-sm font-medium text-foreground">联系邮箱</label>
+                      <Input type="email" placeholder="your@email.com" value={formData.contact_email} onChange={(e) => setFormData({ ...formData, contact_email: e.target.value })} className="h-11" />
                     </div>
                     <div className="space-y-2">
                       <label className="text-sm font-medium text-foreground">客服联系方式</label>

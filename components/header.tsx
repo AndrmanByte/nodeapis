@@ -9,13 +9,21 @@ import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
 import { LoginDialog } from "@/components/login-dialog";
 
+// Module-level auth cache to prevent flash on navigation
+let cachedAuth: { isLoggedIn: boolean; points: number; level: number; timestamp: number } | null = null;
+let authCheckPromise: Promise<void> | null = null;
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
+export function clearAuthCache() {
+  cachedAuth = null;
+}
+
 export function Header() {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [authLoading, setAuthLoading] = useState(true);
-  const [userPoints, setUserPoints] = useState(0);
-  const [userLevel, setUserLevel] = useState(1);
+  const [isLoggedIn, setIsLoggedIn] = useState(cachedAuth?.isLoggedIn ?? false);
+  const [userPoints, setUserPoints] = useState(cachedAuth?.points ?? 0);
+  const [userLevel, setUserLevel] = useState(cachedAuth?.level ?? 1);
   const [loginDialogOpen, setLoginDialogOpen] = useState(false);
 
   useEffect(() => {
@@ -23,25 +31,59 @@ export function Header() {
   }, []);
 
   const checkAuth = async () => {
-    try {
-      const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      setIsLoggedIn(!!user);
-      if (user) {
-        const { data } = await supabase
-          .from('users')
-          .select('points, level')
-          .eq('id', user.id)
-          .single();
-        if (data) {
-          setUserPoints(data.points || 0);
-          setUserLevel(data.level || 1);
+    // Use cache if still valid
+    if (cachedAuth && Date.now() - cachedAuth.timestamp < CACHE_DURATION) {
+      setIsLoggedIn(cachedAuth.isLoggedIn);
+      setUserPoints(cachedAuth.points);
+      setUserLevel(cachedAuth.level);
+      return;
+    }
+
+    // Prevent concurrent requests
+    if (!authCheckPromise) {
+      authCheckPromise = (async () => {
+        try {
+          const supabase = createClient();
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user) {
+            const { data } = await supabase
+              .from('users')
+              .select('points, level')
+              .eq('id', user.id)
+              .single();
+            cachedAuth = {
+              isLoggedIn: true,
+              points: data?.points || 0,
+              level: data?.level || 1,
+              timestamp: Date.now(),
+            };
+          } else {
+            cachedAuth = {
+              isLoggedIn: false,
+              points: 0,
+              level: 1,
+              timestamp: Date.now(),
+            };
+          }
+        } catch {
+          cachedAuth = {
+            isLoggedIn: false,
+            points: 0,
+            level: 1,
+            timestamp: Date.now(),
+          };
+        } finally {
+          authCheckPromise = null;
         }
-      }
-    } catch {
-      setIsLoggedIn(false);
-    } finally {
-      setAuthLoading(false);
+      })();
+    }
+
+    await authCheckPromise;
+
+    if (cachedAuth) {
+      setIsLoggedIn(cachedAuth.isLoggedIn);
+      setUserPoints(cachedAuth.points);
+      setUserLevel(cachedAuth.level);
     }
   };
 
@@ -86,7 +128,7 @@ export function Header() {
                 NODE<span className="text-primary">APIS</span>
               </span>
               <span className="text-[9px] tracking-[0.5em] text-muted-foreground/60 mt-0.5" style={{ fontFamily: "'Courier New', Consolas, monospace" }}>
-                免费体验 · AI API 中转聚合
+                发现好用的中转站
               </span>
             </div>
           </Link>
@@ -112,9 +154,7 @@ export function Header() {
         </div>
 
         <div className="hidden items-center gap-3 md:flex">
-          {authLoading ? (
-            <div className="h-8 w-24" />
-          ) : isLoggedIn ? (
+          {isLoggedIn ? (
             <>
               <Link href="/checkin" className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
                 <Coins className="h-4 w-4 text-yellow-500" />
@@ -184,9 +224,7 @@ export function Header() {
               </Link>
             ))}
             <div className="flex flex-col gap-2 pt-2">
-              {authLoading ? (
-                <div className="h-9" />
-              ) : isLoggedIn ? (
+              {isLoggedIn ? (
                 <Button variant="ghost" size="sm" asChild>
                   <Link href="/profile" onClick={() => setMobileMenuOpen(false)}>个人中心</Link>
                 </Button>

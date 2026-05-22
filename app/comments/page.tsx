@@ -78,7 +78,7 @@ export default function CommentsPage() {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <main className="px-4 py-8 sm:px-6 lg:px-8">
+      <main className="px-4 py-8 sm:px-6 lg:px-8 animate-page-enter">
         <div className="mx-auto max-w-5xl">
           {/* 顶部标题 */}
           <div className="mb-8">

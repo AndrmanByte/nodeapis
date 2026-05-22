@@ -4,31 +4,14 @@
       <stop offset="0%" stop-color="#f97316"/>
       <stop offset="100%" stop-color="#ea580c"/>
     </linearGradient>
-    <linearGradient id="accent" x1="50" y1="50" x2="130" y2="130" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#f97316"/>
-      <stop offset="100%" stop-color="#ea580c"/>
-    </linearGradient>
   </defs>
   <rect width="180" height="180" rx="40" fill="url(#bg)"/>
-  <!-- Dot matrix grid -->
-  <g fill="#ffffff" opacity="0.1">
-    <circle cx="30" cy="30" r="2"/><circle cx="54" cy="30" r="2"/><circle cx="78" cy="30" r="2"/><circle cx="102" cy="30" r="2"/><circle cx="126" cy="30" r="2"/><circle cx="150" cy="30" r="2"/>
-    <circle cx="30" cy="54" r="2"/><circle cx="54" cy="54" r="2"/><circle cx="78" cy="54" r="2"/><circle cx="102" cy="54" r="2"/><circle cx="126" cy="54" r="2"/><circle cx="150" cy="54" r="2"/>
-    <circle cx="30" cy="78" r="2"/><circle cx="54" cy="78" r="2"/><circle cx="78" cy="78" r="2"/><circle cx="102" cy="78" r="2"/><circle cx="126" cy="78" r="2"/><circle cx="150" cy="78" r="2"/>
-    <circle cx="30" cy="102" r="2"/><circle cx="54" cy="102" r="2"/><circle cx="78" cy="102" r="2"/><circle cx="102" cy="102" r="2"/><circle cx="126" cy="102" r="2"/><circle cx="150" cy="102" r="2"/>
-    <circle cx="30" cy="126" r="2"/><circle cx="54" cy="126" r="2"/><circle cx="78" cy="126" r="2"/><circle cx="102" cy="126" r="2"/><circle cx="126" cy="126" r="2"/><circle cx="150" cy="126" r="2"/>
-    <circle cx="30" cy="150" r="2"/><circle cx="54" cy="150" r="2"/><circle cx="78" cy="150" r="2"/><circle cx="102" cy="150" r="2"/><circle cx="126" cy="150" r="2"/><circle cx="150" cy="150" r="2"/>
-  </g>
-  <!-- Hexagon border -->
-  <polygon points="90,35 135,60 135,120 90,145 45,120 45,60" fill="none" stroke="#ffffff" stroke-width="2" opacity="0.4"/>
-  <polygon points="90,45 128,65 128,115 90,135 52,115 52,65" fill="none" stroke="#ffffff" stroke-width="1" opacity="0.15"/>
+  <!-- Accent circle -->
+  <circle cx="90" cy="82" r="52" fill="none" stroke="#ffffff" stroke-width="1.5" opacity="0.15"/>
   <!-- Text -->
-  <text x="90" y="105" text-anchor="middle" font-family="'Courier New', Consolas, monospace" font-weight="900" font-size="52" letter-spacing="6">
+  <text x="90" y="100" text-anchor="middle" font-family="'Courier New', Consolas, monospace" font-weight="900" font-size="56" letter-spacing="6">
     <tspan fill="#ffffff">N</tspan><tspan fill="#fff7ed">A</tspan>
   </text>
-  <!-- Bottom line -->
-  <line x1="55" y1="118" x2="125" y2="118" stroke="#ffffff" stroke-width="1.5" opacity="0.3"/>
-  <!-- Corner dots -->
-  <circle cx="90" cy="35" r="3" fill="#ffffff" opacity="0.8"/>
-  <circle cx="90" cy="145" r="3" fill="#fff7ed" opacity="0.8"/>
+  <!-- Underline -->
+  <line x1="52" y1="115" x2="128" y2="115" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" opacity="0.4"/>
 </svg>
