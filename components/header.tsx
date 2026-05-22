@@ -10,6 +10,7 @@ import { createClient } from "@/lib/supabase/client";
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [authLoading, setAuthLoading] = useState(true);
   const [userPoints, setUserPoints] = useState(0);
   const [userLevel, setUserLevel] = useState(1);
 
@@ -35,6 +36,8 @@ export function Header() {
       }
     } catch {
       setIsLoggedIn(false);
+    } finally {
+      setAuthLoading(false);
     }
   };
 
@@ -86,7 +89,9 @@ export function Header() {
         </div>
 
         <div className="hidden items-center gap-4 md:flex">
-          {isLoggedIn ? (
+          {authLoading ? (
+            <div className="h-8 w-24" />
+          ) : isLoggedIn ? (
             <>
               <Link href="/checkin" className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
                 <Coins className="h-4 w-4 text-yellow-500" />
@@ -143,7 +148,9 @@ export function Header() {
               比价
             </Link>
             <div className="flex flex-col gap-2 pt-4">
-              {isLoggedIn ? (
+              {authLoading ? (
+                <div className="h-9" />
+              ) : isLoggedIn ? (
                 <Button variant="ghost" size="sm" asChild>
                   <Link href="/profile">个人中心</Link>
                 </Button>
