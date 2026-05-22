@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { createClient } from '@/lib/supabase/client'
 import type { User, Provider, ProviderSubmission, Notification, TrialOffer } from '@/lib/types'
+import { LoginDialog } from '@/components/login-dialog'
 import {
   User as UserIcon,
   Store,
@@ -27,6 +28,9 @@ import {
   Gift,
   Plus,
   Loader2,
+  KeyRound,
+  Copy,
+  Check,
 } from "lucide-react"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Textarea } from "@/components/ui/textarea"
@@ -49,6 +53,9 @@ export default function ProfilePage() {
   const [trialCodesInput, setTrialCodesInput] = useState('')
   const [trialSubmitting, setTrialSubmitting] = useState(false)
   const [providerTrials, setProviderTrials] = useState<Record<string, TrialOffer[]>>({})
+  const [loginDialogOpen, setLoginDialogOpen] = useState(false)
+  const [claimedCodes, setClaimedCodes] = useState<any[]>([])
+  const [copiedCodeId, setCopiedCodeId] = useState<string | null>(null)
 
   useEffect(() => {
     checkAuth()
@@ -57,7 +64,7 @@ export default function ProfilePage() {
   const checkAuth = async () => {
     const { data: { user: authUser } } = await supabase.auth.getUser()
     if (!authUser) {
-      router.push('/login')
+      setLoginDialogOpen(true)
       return
     }
     loadUserData()
@@ -88,11 +95,22 @@ export default function ProfilePage() {
       const notificationsRes = await fetch('/api/notifications')
       const notificationsData = await notificationsRes.json()
       if (notificationsData.success) setNotifications(notificationsData.data)
+
+      // 获取已领取的兑换码
+      const codesRes = await fetch('/api/user/claimed-codes')
+      const codesData = await codesRes.json()
+      if (codesData.success) setClaimedCodes(codesData.data)
     } catch (error) {
       console.error('Load user data error:', error)
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleCopyCode = (code: string, id: string) => {
+    navigator.clipboard.writeText(code)
+    setCopiedCodeId(id)
+    setTimeout(() => setCopiedCodeId(null), 2000)
   }
 
   const handleUpdateProfile = async () => {
@@ -317,10 +335,14 @@ export default function ProfilePage() {
 
           {/* Tabs */}
           <Tabs defaultValue="providers" className="w-full">
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-5">
               <TabsTrigger value="providers" className="gap-2">
                 <Store className="h-4 w-4" />
                 我的店铺
+              </TabsTrigger>
+              <TabsTrigger value="codes" className="gap-2">
+                <KeyRound className="h-4 w-4" />
+                兑换码
               </TabsTrigger>
               <TabsTrigger value="submissions" className="gap-2">
                 <FileText className="h-4 w-4" />
@@ -395,6 +417,64 @@ export default function ProfilePage() {
                     </CardContent>
                   </Card>
                 ))
+              )}
+            </TabsContent>
+
+            {/* 我的兑换码 */}
+            <TabsContent value="codes" className="space-y-4 mt-6">
+              {claimedCodes.length === 0 ? (
+                <Card className="border-border/50 border-dashed">
+                  <CardContent className="py-12 text-center">
+                    <KeyRound className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                    <p className="text-muted-foreground">暂无兑换码</p>
+                    <p className="text-sm text-muted-foreground mt-1">去试用专区领取免费兑换码吧</p>
+                    <Button className="mt-4" size="sm" asChild>
+                      <Link href="/trials">浏览试用活动</Link>
+                    </Button>
+                  </CardContent>
+                </Card>
+              ) : (
+                claimedCodes.map((item: any) => {
+                  const offer = item.trial_offer
+                  const provider = offer?.provider
+                  return (
+                    <Card key={item.id} className="border-border/50">
+                      <CardContent className="p-4">
+                        <div className="flex items-center gap-3">
+                          {provider?.logo_url ? (
+                            <img src={provider.logo_url} alt="" className="w-10 h-10 rounded-lg object-cover shrink-0" />
+                          ) : (
+                            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                              <span className="text-sm font-bold text-primary">{provider?.name?.charAt(0) || '?'}</span>
+                            </div>
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-sm">{provider?.name || '未知中转站'}</p>
+                            <p className="text-xs text-muted-foreground">{offer?.amount || ''}</p>
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            {item.claimed_at && new Date(item.claimed_at).toLocaleDateString('zh-CN')}
+                          </div>
+                        </div>
+                        <div className="mt-3 flex items-center gap-2">
+                          <code className="flex-1 px-3 py-2 rounded-lg bg-muted text-sm font-mono select-all">{item.code}</code>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="shrink-0 gap-1.5"
+                            onClick={() => handleCopyCode(item.code, item.id)}
+                          >
+                            {copiedCodeId === item.id ? (
+                              <><Check className="h-3.5 w-3.5 text-green-500" /> 已复制</>
+                            ) : (
+                              <><Copy className="h-3.5 w-3.5" /> 复制</>
+                            )}
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )
+                })
               )}
             </TabsContent>
 
@@ -636,6 +716,11 @@ export default function ProfilePage() {
           </div>
         </DialogContent>
       </Dialog>
+      <LoginDialog
+        open={loginDialogOpen}
+        onOpenChange={setLoginDialogOpen}
+        redirectPath="/profile"
+      />
     </div>
   )
 }

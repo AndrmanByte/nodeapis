@@ -214,6 +214,7 @@ export default function AdminDashboard() {
     
     const providerData = {
       name: formData.get('name') as string,
+      short_description: formData.get('short_description') as string,
       description: formData.get('description') as string,
       website: formData.get('website') as string,
       logo_url: providerLogoUrl,
@@ -707,7 +708,8 @@ export default function AdminDashboard() {
                           <div className="space-y-2"><Label htmlFor="name">名称</Label><Input id="name" name="name" defaultValue={editingProvider?.name} required /></div>
                           <div className="space-y-2"><Label htmlFor="website">网站</Label><Input id="website" name="website" defaultValue={editingProvider?.website} required /></div>
                         </div>
-                        <div className="space-y-2"><Label htmlFor="description">描述</Label><Textarea id="description" name="description" defaultValue={editingProvider?.description} /></div>
+                        <div className="space-y-2"><Label htmlFor="short_description">一句话描述</Label><Input id="short_description" name="short_description" defaultValue={(editingProvider as any)?.short_description || ''} placeholder="用一句话概括服务" /></div>
+                        <div className="space-y-2"><Label htmlFor="description">详细描述</Label><Textarea id="description" name="description" defaultValue={editingProvider?.description} rows={5} /></div>
                         <div className="grid gap-4 md:grid-cols-2">
                           <ImageUpload label="Logo 图片" value={providerLogoUrl} onChange={setProviderLogoUrl} hint="正方形图片，建议 200x200" aspect="square" />
                           <ImageUpload label="官网截图" value={providerScreenshotUrl} onChange={setProviderScreenshotUrl} hint="首页截图，建议 1200x800" aspect="wide" />
@@ -1067,6 +1069,7 @@ export default function AdminDashboard() {
                               </Badge>
                             </div>
                             <p className="text-sm text-muted-foreground">{submission.website}</p>
+                            {(submission as any).short_description && <p className="text-sm font-medium">{(submission as any).short_description}</p>}
                             <p className="text-sm">{submission.description}</p>
                             <p className="text-xs text-muted-foreground">提交者: {submission.user?.username || submission.user?.email || '未知'} | 提交于 {new Date(submission.submitted_at).toLocaleString('zh-CN')}</p>
                             {submission.supported_models?.length > 0 && (

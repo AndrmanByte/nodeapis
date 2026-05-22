@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
+import { LoginDialog } from '@/components/login-dialog'
 import type { LotteryEvent } from '@/lib/types'
 
 interface LotteryEventWithProvider extends LotteryEvent {
@@ -18,6 +19,7 @@ export function LotterySection() {
   const [events, setEvents] = useState<LotteryEventWithProvider[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedEvent, setSelectedEvent] = useState<LotteryEventWithProvider | null>(null)
+  const [loginDialogOpen, setLoginDialogOpen] = useState(false)
   const [participating, setParticipating] = useState(false)
   const [hasJoined, setHasJoined] = useState<Record<string, boolean>>({})
   const supabase = createClient()
@@ -57,7 +59,7 @@ export function LotterySection() {
   const handleJoin = async (eventId: string) => {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
-      window.location.href = '/login'
+      setLoginDialogOpen(true)
       return
     }
 
@@ -274,6 +276,11 @@ export function LotterySection() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      <LoginDialog
+        open={loginDialogOpen}
+        onOpenChange={setLoginDialogOpen}
+        redirectPath="/"
+      />
     </section>
   )
 }

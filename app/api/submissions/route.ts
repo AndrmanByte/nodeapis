@@ -7,7 +7,7 @@ const SUBMIT_REWARD_POINTS = 50
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { name, description, website, api_url, contact_email, contact, supported_models, supported_vendors, pricing, features, logo_url, screenshot_url, register_type, min_deposit, payment_methods, free_trial, advantages } = body
+    const { name, short_description, description, website, api_url, contact_email, contact, supported_models, supported_vendors, pricing, features, logo_url, screenshot_url, register_type, min_deposit, payment_methods, free_trial, advantages } = body
 
     if (!name || !website) {
       return NextResponse.json(
@@ -18,15 +18,23 @@ export async function POST(request: Request) {
 
     const supabase = createAdminClient()
 
-    // 获取当前用户
+    // 获取当前用户（必须登录）
     const userSupabase = await createClient()
     const { data: { user } } = await userSupabase.auth.getUser()
+
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: '请先登录后再提交' },
+        { status: 401 }
+      )
+    }
 
     const { data, error } = await supabase
       .from('provider_submissions')
       .insert({
-        user_id: user?.id || null,
+        user_id: user.id,
         name,
+        short_description: short_description || '',
         description,
         website,
         api_url: api_url || '',
@@ -54,43 +62,38 @@ export async function POST(request: Request) {
 
     // 奖励提交者积分
     try {
-      const userSupabase = await createClient()
-      const { data: { user } } = await userSupabase.auth.getUser()
+      const { data: userData } = await supabase
+        .from('users')
+        .select('points')
+        .eq('id', user.id)
+        .single()
 
-      if (user) {
-        const { data: userData } = await supabase
+      if (userData) {
+        const newPoints = userData.points + SUBMIT_REWARD_POINTS
+        await supabase
           .from('users')
-          .select('points')
+          .update({ points: newPoints })
           .eq('id', user.id)
-          .single()
 
-        if (userData) {
-          const newPoints = userData.points + SUBMIT_REWARD_POINTS
-          await supabase
-            .from('users')
-            .update({ points: newPoints })
-            .eq('id', user.id)
+        await supabase
+          .from('point_records')
+          .insert({
+            user_id: user.id,
+            amount: SUBMIT_REWARD_POINTS,
+            balance: newPoints,
+            type: 'submit_provider',
+            description: `提交中转站「${name}」获得 ${SUBMIT_REWARD_POINTS} 积分`,
+            related_id: data.id
+          })
 
-          await supabase
-            .from('point_records')
-            .insert({
-              user_id: user.id,
-              amount: SUBMIT_REWARD_POINTS,
-              balance: newPoints,
-              type: 'submit_provider',
-              description: `提交中转站「${name}」获得 ${SUBMIT_REWARD_POINTS} 积分`,
-              related_id: data.id
-            })
-
-          await supabase
-            .from('notifications')
-            .insert({
-              user_id: user.id,
-              title: '提交奖励',
-              content: `提交中转站「${name}」成功，获得 ${SUBMIT_REWARD_POINTS} 积分奖励！`,
-              type: 'points'
-            })
-        }
+        await supabase
+          .from('notifications')
+          .insert({
+            user_id: user.id,
+            title: '提交奖励',
+            content: `提交中转站「${name}」成功，获得 ${SUBMIT_REWARD_POINTS} 积分奖励！`,
+            type: 'points'
+          })
       }
     } catch (rewardError) {
       console.error('Award submit points error:', rewardError)

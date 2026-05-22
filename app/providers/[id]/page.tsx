@@ -201,8 +201,24 @@ export default function ProviderDetailPage() {
                       )}
                     </div>
                   </div>
+                  {provider.short_description && (
+                    <p className="mt-1 text-sm text-muted-foreground">{provider.short_description}</p>
+                  )}
                   {provider.description && (
-                    <p className="mt-4 text-muted-foreground leading-relaxed">{provider.description}</p>
+                    <div className="mt-4 text-muted-foreground leading-relaxed">
+                      {provider.description.split(/(?=【[^]+?】)/).map((section, i) => {
+                        const match = section.match(/^【(.+?)】\s*([\s\S]*)$/)
+                        if (match) {
+                          return (
+                            <div key={i} className="mb-4">
+                              <h3 className="font-semibold text-foreground mb-1.5">{match[1]}</h3>
+                              <p className="whitespace-pre-line">{match[2].trim()}</p>
+                            </div>
+                          )
+                        }
+                        return <p key={i} className="mb-2">{section.trim()}</p>
+                      })}
+                    </div>
                   )}
                   {provider.advantages && provider.advantages.length > 0 && (
                     <div className="flex flex-wrap gap-2 mt-3">

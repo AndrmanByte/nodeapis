@@ -25,6 +25,7 @@ export function LoginDialog({
   open,
   onOpenChange,
   redirectPath,
+  onLoginSuccess,
 }: LoginDialogProps) {
   const supabase = createClient()
   const [loading, setLoading] = useState(false)
@@ -41,6 +42,10 @@ export function LoginDialog({
           redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(redirectPath)}`,
         },
       })
+
+      if (!error && onLoginSuccess) {
+        onLoginSuccess()
+      }
 
       if (error) throw error
     } catch (err: unknown) {

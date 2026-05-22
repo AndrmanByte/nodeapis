@@ -271,7 +271,7 @@ function ProviderCard({ provider, featured }: { provider: Provider; featured?: b
         </div>
 
         {/* Description */}
-        <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">{provider.description}</p>
+        <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">{provider.short_description || provider.description}</p>
 
 
       </div>

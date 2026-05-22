@@ -12,6 +12,7 @@ import { Gift, Users, Clock, Store, ArrowLeft, Trophy, Check, Coins, Sparkles } 
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
+import { LoginDialog } from '@/components/login-dialog'
 
 interface LotteryEventWithProvider extends LotteryEvent {
   provider?: {
@@ -39,6 +40,7 @@ export default function LotteryDetailPage() {
   const [userPoints, setUserPoints] = useState(0)
   const [userLevel, setUserLevel] = useState(1)
   const [levelInfo, setLevelInfo] = useState<Level | null>(null)
+  const [loginDialogOpen, setLoginDialogOpen] = useState(false)
 
   useEffect(() => {
     checkAuth()
@@ -104,7 +106,7 @@ export default function LotteryDetailPage() {
 
   const handleParticipate = async () => {
     if (!user) {
-      router.push('/login')
+      setLoginDialogOpen(true)
       return
     }
 
@@ -345,7 +347,7 @@ export default function LotteryDetailPage() {
                       )}
                       {!user && (
                         <p className="text-center text-sm text-muted-foreground mt-2">
-                          请先 <Link href="/login" className="text-primary hover:underline">登录</Link> 后参与
+                          请先 <button onClick={() => setLoginDialogOpen(true)} className="text-primary hover:underline">登录</button> 后参与
                         </p>
                       )}
                     </div>
@@ -430,6 +432,11 @@ export default function LotteryDetailPage() {
           </div>
         </div>
       </main>
+      <LoginDialog
+        open={loginDialogOpen}
+        onOpenChange={setLoginDialogOpen}
+        redirectPath={`/lottery/${params.id}`}
+      />
     </div>
   )
 }

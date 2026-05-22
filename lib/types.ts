@@ -76,6 +76,7 @@ export interface Provider {
   id: string
   owner_id?: string
   name: string
+  short_description?: string
   description: string
   website: string
   api_url?: string
@@ -140,6 +141,7 @@ export interface TrialOfferCode {
 
 export interface ProviderInput {
   name: string
+  short_description?: string
   description: string
   website: string
   api_url?: string
@@ -167,6 +169,7 @@ export interface ProviderSubmission {
   id: string
   user_id?: string
   name: string
+  short_description?: string
   description?: string
   website: string
   api_url?: string

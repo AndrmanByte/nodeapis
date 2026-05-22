@@ -12,6 +12,7 @@ import {
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 import type { Level } from '@/lib/types'
+import { LoginDialog } from '@/components/login-dialog'
 
 const ICON_MAP: Record<string, React.ReactNode> = {
   Sprout: <Sprout className="h-5 w-5" />,
@@ -57,6 +58,7 @@ export function CheckinCard() {
   const [levels, setLevels] = useState<Level[]>([])
   const [showSuccess, setShowSuccess] = useState(false)
   const [earnedPoints, setEarnedPoints] = useState(0)
+  const [loginDialogOpen, setLoginDialogOpen] = useState(false)
 
   useEffect(() => {
     fetchData()
@@ -158,14 +160,21 @@ export function CheckinCard() {
 
   if (!data) {
     return (
-      <Card className="border-border/50 bg-card/50 backdrop-blur">
-        <CardContent className="p-6 text-center">
-          <p className="text-muted-foreground">请先登录查看签到信息</p>
-          <Button className="mt-4" asChild>
-            <a href="/login">前往登录</a>
-          </Button>
-        </CardContent>
-      </Card>
+      <>
+        <Card className="border-border/50 bg-card/50 backdrop-blur">
+          <CardContent className="p-6 text-center">
+            <p className="text-muted-foreground">请先登录查看签到信息</p>
+            <Button className="mt-4" onClick={() => setLoginDialogOpen(true)}>
+              前往登录
+            </Button>
+          </CardContent>
+        </Card>
+        <LoginDialog
+          open={loginDialogOpen}
+          onOpenChange={setLoginDialogOpen}
+          redirectPath="/checkin"
+        />
+      </>
     )
   }
 
@@ -348,6 +357,11 @@ export function CheckinCard() {
           </div>
         </CardContent>
       </Card>
+      <LoginDialog
+        open={loginDialogOpen}
+        onOpenChange={setLoginDialogOpen}
+        redirectPath="/checkin"
+      />
     </div>
   )
 }

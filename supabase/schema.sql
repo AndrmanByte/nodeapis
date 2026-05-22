@@ -438,3 +438,12 @@ ON CONFLICT DO NOTHING;
 INSERT INTO admins (email, password_hash, auth_provider) VALUES
 ('admin@nodeapis.xyz', '$2a$10$XQxBtJXKQZPHJVL.Y5J5/.OJZz0LsUHKYVZYR.5YKz5L5Y5Y5Y5Y5', 'email')
 ON CONFLICT (email) DO NOTHING;
+
+-- ==================== 数据库更新 ====================
+
+-- 添加一句话描述字段
+ALTER TABLE providers ADD COLUMN IF NOT EXISTS short_description TEXT DEFAULT '';
+ALTER TABLE provider_submissions ADD COLUMN IF NOT EXISTS short_description TEXT DEFAULT '';
+
+-- 添加积分消耗字段（试用活动）
+ALTER TABLE trial_offers ADD COLUMN IF NOT EXISTS points_cost INTEGER DEFAULT 0;

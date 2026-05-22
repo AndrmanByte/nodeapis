@@ -38,6 +38,7 @@ export default function AdminNewProviderPage() {
     name: "",
     website: "",
     api_url: "",
+    short_description: "",
     description: "",
     logo_url: "",
     screenshot_url: "",
@@ -91,6 +92,7 @@ export default function AdminNewProviderPage() {
 
       const body = {
         name: formData.name,
+        short_description: formData.short_description,
         description: formData.description,
         website: formData.website,
         logo_url: formData.logo_url,
@@ -158,8 +160,12 @@ export default function AdminNewProviderPage() {
                 <Input type="url" placeholder="https://example.com" value={formData.website} onChange={(e) => setFormData({ ...formData, website: e.target.value })} required className="h-11" />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground">简介 <span className="text-destructive">*</span></label>
-                <Textarea placeholder="简单描述你的服务特点" value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} required rows={3} />
+                <label className="text-sm font-medium text-foreground">一句话描述 <span className="text-destructive">*</span></label>
+                <Input placeholder="用一句话概括你的服务" value={formData.short_description} onChange={(e) => setFormData({ ...formData, short_description: e.target.value })} required className="h-11" />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground">详细描述 <span className="text-destructive">*</span></label>
+                <Textarea placeholder="详细描述你的服务特点、功能和优势" value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} required rows={5} />
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium text-foreground">优势亮点 <span className="text-muted-foreground font-normal">（最多3个，每个15字）</span></label>

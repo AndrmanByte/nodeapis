@@ -6,6 +6,7 @@ import { useState, useEffect } from "react";
 import { Menu, X, User, Coins, Gift } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
+import { LoginDialog } from "@/components/login-dialog";
 
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -13,6 +14,7 @@ export function Header() {
   const [authLoading, setAuthLoading] = useState(true);
   const [userPoints, setUserPoints] = useState(0);
   const [userLevel, setUserLevel] = useState(1);
+  const [loginDialogOpen, setLoginDialogOpen] = useState(false);
 
   useEffect(() => {
     checkAuth();
@@ -110,11 +112,17 @@ export function Header() {
               </Button>
             </>
           ) : (
-            <Button variant="ghost" size="sm" asChild>
-              <Link href="/login">登录</Link>
+            <Button variant="ghost" size="sm" onClick={() => setLoginDialogOpen(true)}>
+              登录
             </Button>
           )}
         </div>
+
+        <LoginDialog
+          open={loginDialogOpen}
+          onOpenChange={setLoginDialogOpen}
+          redirectPath={typeof window !== 'undefined' ? window.location.pathname : '/'}
+        />
 
         <button
           className="md:hidden"
@@ -154,8 +162,8 @@ export function Header() {
                   <Link href="/profile" onClick={() => setMobileMenuOpen(false)}>个人中心</Link>
                 </Button>
               ) : (
-                <Button variant="ghost" size="sm" asChild>
-                  <Link href="/login" onClick={() => setMobileMenuOpen(false)}>登录</Link>
+                <Button variant="ghost" size="sm" onClick={() => { setMobileMenuOpen(false); setLoginDialogOpen(true); }}>
+                  登录
                 </Button>
               )}
             </div>

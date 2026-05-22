@@ -30,6 +30,7 @@ import {
   ExternalLink,
 } from "lucide-react"
 import type { Vendor } from "@/lib/types"
+import { LoginDialog } from "@/components/login-dialog"
 
 interface ModelPricing {
   model: string
@@ -47,6 +48,7 @@ export default function SubmitPage() {
     name: "",
     website: "",
     api_url: "",
+    short_description: "",
     description: "",
     logo_url: "",
     screenshot_url: "",
@@ -55,6 +57,8 @@ export default function SubmitPage() {
     register_type: "开放注册",
     min_deposit: "",
   })
+  const [aiLoading, setAiLoading] = useState(false)
+  const [loginDialogOpen, setLoginDialogOpen] = useState(false)
   const [paymentMethods, setPaymentMethods] = useState<string[]>([])
   const [freeTrial, setFreeTrial] = useState(false)
   const [advantages, setAdvantages] = useState<string[]>([])
@@ -82,11 +86,39 @@ export default function SubmitPage() {
   const addCustomTag = () => { const tag = customTagInput.trim(); if (tag && customTags.length < 3 && !customTags.includes(tag)) { setCustomTags([...customTags, tag]); setCustomTagInput("") } }
   const removeCustomTag = (tag: string) => setCustomTags(customTags.filter((t) => t !== tag))
 
+  const handleAiOptimize = async () => {
+    if (!formData.name || !formData.description) {
+      setStatus("error"); setErrorMsg("请先填写名称和描述"); return
+    }
+    setAiLoading(true)
+    setStatus("idle")
+    try {
+      const res = await fetch("/api/ai/optimize-description", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: formData.name, description: formData.description }),
+      })
+      const data = await res.json()
+      if (data.success && data.data) {
+        setFormData({ ...formData, description: data.data })
+      } else {
+        setStatus("error"); setErrorMsg(data.error || "AI 优化失败")
+      }
+    } catch {
+      setStatus("error"); setErrorMsg("AI 服务调用失败")
+    } finally {
+      setAiLoading(false)
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setStatus("idle")
     setErrorMsg("")
 
+    if (!formData.short_description) {
+      setStatus("error"); setErrorMsg("请填写一句话描述"); return
+    }
     if (vendors.length > 0 && selectedVendors.length === 0) {
       setStatus("error"); setErrorMsg("请至少选择一个支持厂商"); return
     }
@@ -112,7 +144,7 @@ export default function SubmitPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...formData, supported_vendors: selectedVendors, supported_models: pricing.map((p) => p.model), pricing, features: customTags, payment_methods: paymentMethods, free_trial: freeTrial, advantages }),
       })
-      if (res.ok) { setStatus("success") } else { const data = await res.json(); setStatus("error"); setErrorMsg(data.error || "提交失败") }
+      if (res.ok) { setStatus("success") } else { const data = await res.json(); if (res.status === 401) { setLoginDialogOpen(true) } else { setStatus("error"); setErrorMsg(data.error || "提交失败") } }
     } catch { setStatus("error"); setErrorMsg("网络错误") } finally { setLoading(false) }
   }
 
@@ -158,8 +190,22 @@ export default function SubmitPage() {
                       <Input type="url" placeholder="https://example.com" value={formData.website} onChange={(e) => setFormData({ ...formData, website: e.target.value })} required className="h-11" />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-sm font-medium text-foreground">简介 <span className="text-destructive">*</span></label>
-                      <Textarea placeholder="简单描述你的服务特点" value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} required rows={3} />
+                      <label className="text-sm font-medium text-foreground">一句话描述 <span className="text-destructive">*</span></label>
+                      <Input placeholder="用一句话概括你的服务，如：国内最稳定的 OpenAI API 中转服务" value={formData.short_description} onChange={(e) => setFormData({ ...formData, short_description: e.target.value })} className="h-11" />
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <label className="text-sm font-medium text-foreground">详细描述 <span className="text-destructive">*</span></label>
+                        <Button type="button" variant="outline" size="sm" className="gap-1.5 text-primary" onClick={handleAiOptimize} disabled={aiLoading || !formData.name || !formData.description}>
+                          {aiLoading ? (
+                            <><Loader2 className="h-3.5 w-3.5 animate-spin" /> AI 优化中...</>
+                          ) : (
+                            <><Sparkles className="h-3.5 w-3.5" /> AI 优化</>
+                          )}
+                        </Button>
+                      </div>
+                      <Textarea placeholder="尽量详细描述你的服务特点、功能和优势，AI 会帮你优化成结构化描述" value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} required rows={5} />
+                      <p className="text-xs text-muted-foreground">填写越多，AI 优化效果越好。建议包含：服务定位、支持的模型、价格优势、特色功能等</p>
                     </div>
                     <div className="space-y-2">
                       <label className="text-sm font-medium text-foreground">优势亮点 <span className="text-muted-foreground font-normal">（最多3个，每个15字）</span></label>
@@ -421,6 +467,11 @@ export default function SubmitPage() {
         </div>
       </main>
       <Footer />
+      <LoginDialog
+        open={loginDialogOpen}
+        onOpenChange={setLoginDialogOpen}
+        redirectPath="/submit"
+      />
     </div>
   )
 }
