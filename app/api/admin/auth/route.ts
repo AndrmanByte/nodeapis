@@ -48,7 +48,7 @@ export async function POST(request: Request) {
     // 设置cookie
     const cookieStore = await cookies()
     cookieStore.set('admin_token', token, {
-      httpOnly: true,
+      httpOnly: false,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       maxAge: 60 * 60 * 24 * 7 // 7天
