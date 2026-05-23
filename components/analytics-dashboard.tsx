@@ -133,16 +133,16 @@ export function AnalyticsDashboard() {
       <div className="space-y-2">
         {data.slice(0, 7).map((item, i) => (
           <div key={i} className="flex items-center gap-2">
-            <div className="w-32 text-xs text-muted-foreground truncate" title={item.x}>
+            <div className="w-20 sm:w-32 text-xs text-muted-foreground truncate" title={item.x}>
               {item.x || '(直接访问)'}
             </div>
             <div className="flex-1 h-5 bg-muted/30 rounded overflow-hidden">
-              <div 
+              <div
                 className="h-full bg-primary/60 rounded transition-all"
                 style={{ width: `${(item.y / maxValue) * 100}%` }}
               />
             </div>
-            <div className="w-16 text-xs text-right font-medium">
+            <div className="w-12 sm:w-16 text-xs text-right font-medium">
               {formatNumber(item.y)}
             </div>
           </div>
@@ -201,8 +201,8 @@ export function AnalyticsDashboard() {
   return (
     <div className="space-y-6">
       {/* 头部控制栏 */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
           <h2 className="text-lg font-semibold">网站统计</h2>
           {isDemo && (
             <Badge variant="secondary">演示数据</Badge>
@@ -334,7 +334,7 @@ export function AnalyticsDashboard() {
 
       {/* 详细数据 Tabs */}
       <Tabs defaultValue="pages" className="space-y-4">
-        <TabsList>
+        <TabsList className="w-full justify-start overflow-x-auto">
           <TabsTrigger value="pages">热门页面</TabsTrigger>
           <TabsTrigger value="referrers">流量来源</TabsTrigger>
           <TabsTrigger value="browsers">浏览器</TabsTrigger>

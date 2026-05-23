@@ -618,10 +618,10 @@ export default function AdminDashboard() {
         onMobileToggle={() => setMobileOpen(!mobileOpen)}
       />
 
-      <main className="md:ml-56 min-h-screen">
+      <main className="md:ml-56 min-h-screen pt-14 md:pt-0">
         {/* Top bar */}
         <div className="sticky top-0 z-30 border-b border-border/50 bg-background/80 backdrop-blur-md">
-          <div className="flex items-center justify-between px-6 h-14">
+          <div className="flex items-center justify-between px-4 sm:px-6 h-14">
             <h1 className="text-lg font-semibold">
               {activeSection === 'analytics' && '数据统计'}
               {activeSection === 'providers' && '中转站管理'}
@@ -645,7 +645,7 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        <div className="p-6">
+        <div className="p-4 sm:p-6">
           {/* 网站统计 */}
           {activeSection === 'analytics' && <AnalyticsDashboard />}
 
@@ -657,23 +657,23 @@ export default function AdminDashboard() {
                   <CardTitle>中转站管理</CardTitle>
                   <Button onClick={() => router.push('/zjf/providers/new')} className="gap-2"><Plus className="h-4 w-4" />添加中转站</Button>
                 </div>
-                <div className="flex items-center gap-2 mt-4"><Search className="h-4 w-4 text-muted-foreground" /><Input placeholder="搜索中转站..." value={providerSearch} onChange={(e) => setProviderSearch(e.target.value)} className="max-w-sm" /></div>
+                <div className="flex items-center gap-2 mt-4"><Search className="h-4 w-4 text-muted-foreground shrink-0" /><Input placeholder="搜索中转站..." value={providerSearch} onChange={(e) => setProviderSearch(e.target.value)} className="max-w-sm" /></div>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   {filteredProviders.map((provider) => (
-                    <div key={provider.id} className="flex items-center justify-between p-4 border border-border/50 rounded-lg">
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2">
+                    <div key={provider.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border border-border/50 rounded-lg gap-3">
+                      <div className="space-y-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
                           <h3 className="font-semibold">{provider.name}</h3>
                           <Badge variant={provider.status === 'online' ? 'default' : 'secondary'}>{provider.status}</Badge>
                           {provider.is_verified && <Badge variant="outline">认证</Badge>}
                           {provider.is_featured && <Badge className="bg-yellow-500/10 text-yellow-500">推荐</Badge>}
                           {provider.is_published === false && <Badge variant="outline" className="text-red-500">已下架</Badge>}
                         </div>
-                        <p className="text-sm text-muted-foreground">{provider.website}</p>
+                        <p className="text-sm text-muted-foreground truncate">{provider.website}</p>
                       </div>
-                      <div className="flex gap-2">
+                      <div className="flex flex-wrap gap-2 shrink-0">
                         <Button size="sm" variant={provider.is_published === false ? 'default' : 'outline'} className="gap-1" onClick={() => handleTogglePublish(provider.id, provider.is_published !== false)}>
                           {provider.is_published === false ? <><Check className="h-4 w-4" /> 上架</> : <><X className="h-4 w-4" /> 下架</>}
                         </Button>
@@ -698,9 +698,9 @@ export default function AdminDashboard() {
               <CardContent>
                 <div className="space-y-4">
                   {filteredUsers.map((user) => (
-                    <div key={user.id} className="flex items-center justify-between p-4 border border-border/50 rounded-lg">
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2">
+                    <div key={user.id} className="flex flex-col lg:flex-row lg:items-center justify-between p-4 border border-border/50 rounded-lg gap-3">
+                      <div className="space-y-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
                           <h3 className="font-semibold">{user.username || '未设置昵称'}</h3>
                           <Badge variant={user.role === 'admin' ? 'destructive' : user.role === 'merchant' ? 'default' : 'secondary'}>
                             {user.role === 'admin' ? '管理员' : user.role === 'merchant' ? '商家' : '用户'}
@@ -710,23 +710,24 @@ export default function AdminDashboard() {
                           </Badge>
                           {user.is_active === false && <Badge variant="outline" className="text-red-500">已禁用</Badge>}
                         </div>
-                        <p className="text-sm text-muted-foreground">{user.email}</p>
-                        <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                        <p className="text-sm text-muted-foreground truncate">{user.email}</p>
+                        <div className="flex items-center gap-3 sm:gap-4 text-xs text-muted-foreground flex-wrap">
                           <span className="flex items-center gap-1">
                             <Coins className="h-3 w-3 text-yellow-500" />
                             积分: <span className="font-medium text-foreground">{user.points || 0}</span>
                           </span>
                           <span>经验: {user.exp || 0}</span>
-                          <span>注册于 {new Date(user.created_at).toLocaleString('zh-CN')}</span>
+                          <span className="hidden sm:inline">注册于 {new Date(user.created_at).toLocaleString('zh-CN')}</span>
                         </div>
                       </div>
-                      <div className="flex gap-2">
+                      <div className="flex flex-wrap gap-2 shrink-0">
                         <Button size="sm" variant="outline" onClick={() => openPointsDialog(user.id)} className="gap-1">
                           <Coins className="h-4 w-4" />
-                          调整积分
+                          <span className="hidden sm:inline">调整积分</span>
+                          <span className="sm:hidden">积分</span>
                         </Button>
                         <Select defaultValue={user.role} onValueChange={(value) => handleUpdateUser(user.id, { role: value as 'user' | 'merchant' | 'admin' })}>
-                          <SelectTrigger className="w-24"><SelectValue /></SelectTrigger>
+                          <SelectTrigger className="w-20"><SelectValue /></SelectTrigger>
                           <SelectContent>
                             <SelectItem value="user">用户</SelectItem>
                             <SelectItem value="merchant">商家</SelectItem>
@@ -734,7 +735,7 @@ export default function AdminDashboard() {
                           </SelectContent>
                         </Select>
                         <Button size="sm" variant={user.is_active === false ? 'default' : 'outline'} onClick={() => handleUpdateUser(user.id, { is_active: user.is_active === false })}>{user.is_active === false ? '启用' : '禁用'}</Button>
-                        <Button size="sm" variant="destructive" className="gap-1" onClick={() => handleDeleteUser(user.id)}><Trash2 className="h-4 w-4" /> 删除</Button>
+                        <Button size="sm" variant="destructive" className="gap-1" onClick={() => handleDeleteUser(user.id)}><Trash2 className="h-4 w-4" /></Button>
                       </div>
                     </div>
                   ))}
@@ -867,9 +868,9 @@ export default function AdminDashboard() {
               <CardContent>
                 <div className="space-y-4">
                   {lotteryEvents.map((event) => (
-                    <div key={event.id} className="flex items-center justify-between p-4 border border-border/50 rounded-lg">
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2">
+                    <div key={event.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border border-border/50 rounded-lg gap-3">
+                      <div className="space-y-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
                           <h3 className="font-semibold">{event.title}</h3>
                           <Badge variant={event.status === 'active' ? 'default' : event.status === 'drawn' ? 'outline' : 'secondary'}>
                             {event.status === 'draft' ? '草稿' : event.status === 'active' ? '进行中' : event.status === 'ended' ? '已结束' : event.status === 'drawn' ? '已开奖' : '已取消'}
@@ -878,7 +879,7 @@ export default function AdminDashboard() {
                         <p className="text-sm text-muted-foreground">店铺: {event.provider?.name || '未知'}</p>
                         <p className="text-sm text-muted-foreground">参与: {event.current_participants}/{event.max_participants} | 奖品: {event.prize} x{event.winner_count}</p>
                       </div>
-                      <div className="flex gap-2">
+                      <div className="flex flex-wrap gap-2 shrink-0">
                         {event.status !== 'drawn' && event.status !== 'cancelled' && (
                           <Button size="sm" className="bg-green-600 hover:bg-green-700" onClick={() => handleDrawLottery(event.id, event.title)}><Trophy className="h-4 w-4 mr-1" />开奖</Button>
                         )}
@@ -933,9 +934,9 @@ export default function AdminDashboard() {
               <CardContent>
                 <div className="space-y-4">
                   {announcements.map((announcement) => (
-                    <div key={announcement.id} className="flex items-center justify-between p-4 border border-border/50 rounded-lg">
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2">
+                    <div key={announcement.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border border-border/50 rounded-lg gap-3">
+                      <div className="space-y-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
                           <h3 className="font-semibold">{announcement.title}</h3>
                           <Badge variant={announcement.is_active ? 'default' : 'secondary'}>{announcement.is_active ? '激活' : '停用'}</Badge>
                           {announcement.is_pinned && <Badge className="bg-yellow-500/10 text-yellow-500">置顶</Badge>}
@@ -943,7 +944,7 @@ export default function AdminDashboard() {
                         </div>
                         <p className="text-sm text-muted-foreground line-clamp-1">{announcement.content}</p>
                       </div>
-                      <div className="flex gap-2">
+                      <div className="flex flex-wrap gap-2 shrink-0">
                         <Button size="sm" variant="outline" className="gap-1" onClick={() => { setEditingAnnouncement(announcement); setAnnouncementDialogOpen(true) }}><Edit className="h-4 w-4" /> 编辑</Button>
                         <Button size="sm" variant="destructive" className="gap-1" onClick={() => handleDeleteAnnouncement(announcement.id)}><Trash2 className="h-4 w-4" /> 删除</Button>
                       </div>
@@ -966,15 +967,15 @@ export default function AdminDashboard() {
                   ) : (
                     submissions.map((submission) => (
                       <div key={submission.id} className="p-4 border border-border/50 rounded-lg">
-                        <div className="flex items-start justify-between">
-                          <div className="space-y-2">
-                            <div className="flex items-center gap-2">
+                        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+                          <div className="space-y-2 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
                               <h3 className="font-semibold">{submission.name}</h3>
                               <Badge variant={submission.status === 'pending' ? 'secondary' : submission.status === 'approved' ? 'default' : 'destructive'}>
                                 {submission.status === 'pending' ? '待审核' : submission.status === 'approved' ? '已通过' : '已拒绝'}
                               </Badge>
                             </div>
-                            <p className="text-sm text-muted-foreground">{submission.website}</p>
+                            <p className="text-sm text-muted-foreground truncate">{submission.website}</p>
                             {(submission as any).short_description && <p className="text-sm font-medium">{(submission as any).short_description}</p>}
                             <p className="text-sm">{submission.description}</p>
                             <p className="text-xs text-muted-foreground">提交者: {submission.user?.username || submission.user?.email || '未知'} | 提交于 {new Date(submission.submitted_at).toLocaleString('zh-CN')}</p>
@@ -983,7 +984,7 @@ export default function AdminDashboard() {
                             )}
                           </div>
                           {submission.status === 'pending' && (
-                            <div className="flex gap-2">
+                            <div className="flex flex-wrap gap-2 shrink-0">
                               <Button size="sm" className="bg-green-600 hover:bg-green-700" onClick={() => handleReviewSubmission(submission.id, 'approved')}><Check className="h-4 w-4 mr-1" />通过</Button>
                               <Button size="sm" variant="destructive" onClick={() => { const notes = prompt('请输入拒绝原因（可选）'); handleReviewSubmission(submission.id, 'rejected', notes || undefined) }}><X className="h-4 w-4 mr-1" />拒绝</Button>
                             </div>
@@ -1026,8 +1027,8 @@ export default function AdminDashboard() {
                       const categoryInfo = SUGGESTION_CATEGORIES.find(c => c.value === suggestion.category)
                       return (
                         <div key={suggestion.id} className="p-4 border border-border/50 rounded-lg">
-                          <div className="flex items-start justify-between gap-4">
-                            <div className="flex-1 space-y-2">
+                          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+                            <div className="flex-1 space-y-2 min-w-0">
                               <div className="flex items-center gap-2 flex-wrap">
                                 <h3 className="font-semibold">{suggestion.title}</h3>
                                 <Badge variant="outline">{categoryInfo?.label || suggestion.category}</Badge>
@@ -1035,7 +1036,7 @@ export default function AdminDashboard() {
                               </div>
                               <p className="text-sm text-muted-foreground whitespace-pre-wrap">{suggestion.content}</p>
                               <p className="text-xs text-muted-foreground">
-                                提交者: {suggestion.user?.username || suggestion.user?.email || '匿名'} | 
+                                提交者: {suggestion.user?.username || suggestion.user?.email || '匿名'} |
                                 提交于 {new Date(suggestion.created_at).toLocaleString('zh-CN')}
                               </p>
                               {suggestion.admin_reply && (
@@ -1045,12 +1046,12 @@ export default function AdminDashboard() {
                                 </div>
                               )}
                             </div>
-                            <div className="flex flex-col gap-2">
-                              <Select 
-                                defaultValue={suggestion.status} 
+                            <div className="flex flex-row sm:flex-col gap-2 shrink-0">
+                              <Select
+                                defaultValue={suggestion.status}
                                 onValueChange={(value) => handleUpdateSuggestion(suggestion.id, value)}
                               >
-                                <SelectTrigger className="w-24">
+                                <SelectTrigger className="w-20">
                                   <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -1059,8 +1060,8 @@ export default function AdminDashboard() {
                                   ))}
                                 </SelectContent>
                               </Select>
-                              <Button 
-                                size="sm" 
+                              <Button
+                                size="sm"
                                 variant="outline"
                                 onClick={() => {
                                   const reply = prompt('请输入回复内容', suggestion.admin_reply || '')
@@ -1124,19 +1125,19 @@ export default function AdminDashboard() {
               <CardContent>
                 <div className="space-y-2">
                   {models.map((model) => (
-                    <div key={model.id} className="flex items-center justify-between p-3 border border-border/50 rounded-lg">
-                      <div className="flex items-center gap-3">
-                        <div className="space-y-0.5">
-                          <div className="flex items-center gap-2">
+                    <div key={model.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 border border-border/50 rounded-lg gap-2">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="space-y-0.5 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
                             <span className="font-medium">{model.name}</span>
                             <Badge variant="outline" className="text-xs">{model.provider}</Badge>
                             <Badge variant="secondary" className="text-xs">{model.category}</Badge>
                             {!model.is_active && <Badge variant="outline" className="text-red-500 text-xs">已停用</Badge>}
                           </div>
-                          <p className="text-xs text-muted-foreground font-mono">{model.model_id}</p>
+                          <p className="text-xs text-muted-foreground font-mono truncate">{model.model_id}</p>
                         </div>
                       </div>
-                      <div className="flex gap-2">
+                      <div className="flex flex-wrap gap-2 shrink-0">
                         <Button size="sm" variant="outline" className="gap-1" onClick={() => { setEditingModel(model); setModelDialogOpen(true) }}><Edit className="h-4 w-4" /> 编辑</Button>
                         <Button size="sm" variant="destructive" className="gap-1" onClick={() => handleDeleteModel(model.id)}><Trash2 className="h-4 w-4" /> 删除</Button>
                       </div>
@@ -1177,13 +1178,13 @@ export default function AdminDashboard() {
               <CardContent>
                 <div className="space-y-2">
                   {vendors.map((vendor) => (
-                    <div key={vendor.id} className="flex items-center justify-between p-3 border border-border/50 rounded-lg">
-                      <div className="flex items-center gap-3">
+                    <div key={vendor.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 border border-border/50 rounded-lg gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-medium">{vendor.name}</span>
                         <Badge variant="secondary" className="text-xs">排序: {vendor.sort_order}</Badge>
                         {!vendor.is_active && <Badge variant="outline" className="text-red-500 text-xs">已停用</Badge>}
                       </div>
-                      <div className="flex gap-2">
+                      <div className="flex flex-wrap gap-2 shrink-0">
                         <Button size="sm" variant="outline" className="gap-1" onClick={() => { setEditingVendor(vendor); setVendorDialogOpen(true) }}><Edit className="h-4 w-4" /> 编辑</Button>
                         <Button size="sm" variant="destructive" className="gap-1" onClick={() => handleDeleteVendor(vendor.id)}><Trash2 className="h-4 w-4" /> 删除</Button>
                       </div>
@@ -1245,7 +1246,7 @@ export default function AdminDashboard() {
                 <CardContent>
                   <div className="space-y-2">
                     {advertisements.filter(a => a.placement === 'home_top').map((ad) => (
-                      <div key={ad.id} className="flex items-center justify-between p-3 border border-border/50 rounded-lg">
+                      <div key={ad.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 border border-border/50 rounded-lg gap-2">
                         <div className="flex items-center gap-3 min-w-0">
                           {ad.logo_url && <img src={ad.logo_url} alt="" className="w-8 h-8 rounded object-cover shrink-0" />}
                           <div className="min-w-0">
@@ -1256,7 +1257,7 @@ export default function AdminDashboard() {
                             </div>
                           </div>
                         </div>
-                        <div className="flex gap-2 shrink-0">
+                        <div className="flex flex-wrap gap-2 shrink-0">
                           <Button size="sm" variant="outline" className="gap-1" onClick={() => { setEditingAd(ad); setAdLogoUrl(ad.logo_url); setAdPlacement(ad.placement); setAdDialogOpen(true) }}><Edit className="h-4 w-4" /> 编辑</Button>
                           <Button size="sm" variant="destructive" className="gap-1" onClick={() => handleDeleteAdvertisement(ad.id)}><Trash2 className="h-4 w-4" /> 删除</Button>
                         </div>
@@ -1308,7 +1309,7 @@ export default function AdminDashboard() {
                 <CardContent>
                   <div className="space-y-2">
                     {advertisements.filter(a => a.placement === 'home_featured').map((ad) => (
-                      <div key={ad.id} className="flex items-center justify-between p-3 border border-border/50 rounded-lg">
+                      <div key={ad.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 border border-border/50 rounded-lg gap-2">
                         <div className="flex items-center gap-3 min-w-0">
                           {ad.logo_url && <img src={ad.logo_url} alt="" className="w-8 h-8 rounded object-cover shrink-0" />}
                           <div className="min-w-0">
@@ -1318,7 +1319,7 @@ export default function AdminDashboard() {
                             </div>
                           </div>
                         </div>
-                        <div className="flex gap-2 shrink-0">
+                        <div className="flex flex-wrap gap-2 shrink-0">
                           <Button size="sm" variant="outline" className="gap-1" onClick={() => { setEditingAd(ad); setAdLogoUrl(ad.logo_url); setAdPlacement(ad.placement); setAdProviderId(ad.provider_id || ""); setAdDialogOpen(true) }}><Edit className="h-4 w-4" /> 编辑</Button>
                           <Button size="sm" variant="destructive" className="gap-1" onClick={() => handleDeleteAdvertisement(ad.id)}><Trash2 className="h-4 w-4" /> 删除</Button>
                         </div>
@@ -1370,7 +1371,7 @@ export default function AdminDashboard() {
                 <CardContent>
                   <div className="space-y-2">
                     {advertisements.filter(a => a.placement === 'detail_sidebar').map((ad) => (
-                      <div key={ad.id} className="flex items-center justify-between p-3 border border-border/50 rounded-lg">
+                      <div key={ad.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 border border-border/50 rounded-lg gap-2">
                         <div className="flex items-center gap-3 min-w-0">
                           {ad.logo_url && <img src={ad.logo_url} alt="" className="w-8 h-8 rounded object-cover shrink-0" />}
                           <div className="min-w-0">
@@ -1380,7 +1381,7 @@ export default function AdminDashboard() {
                             </div>
                           </div>
                         </div>
-                        <div className="flex gap-2 shrink-0">
+                        <div className="flex flex-wrap gap-2 shrink-0">
                           <Button size="sm" variant="outline" className="gap-1" onClick={() => { setEditingAd(ad); setAdLogoUrl(ad.logo_url); setAdPlacement(ad.placement); setAdProviderId(ad.provider_id || ""); setAdDialogOpen(true) }}><Edit className="h-4 w-4" /> 编辑</Button>
                           <Button size="sm" variant="destructive" className="gap-1" onClick={() => handleDeleteAdvertisement(ad.id)}><Trash2 className="h-4 w-4" /> 删除</Button>
                         </div>
@@ -1432,7 +1433,7 @@ export default function AdminDashboard() {
                 <CardContent>
                   <div className="space-y-2">
                     {advertisements.filter(a => a.placement === 'detail_bottom').map((ad) => (
-                      <div key={ad.id} className="flex items-center justify-between p-3 border border-border/50 rounded-lg">
+                      <div key={ad.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 border border-border/50 rounded-lg gap-2">
                         <div className="flex items-center gap-3 min-w-0">
                           {ad.logo_url && <img src={ad.logo_url} alt="" className="w-8 h-8 rounded object-cover shrink-0" />}
                           <div className="min-w-0">
@@ -1442,7 +1443,7 @@ export default function AdminDashboard() {
                             </div>
                           </div>
                         </div>
-                        <div className="flex gap-2 shrink-0">
+                        <div className="flex flex-wrap gap-2 shrink-0">
                           <Button size="sm" variant="outline" className="gap-1" onClick={() => { setEditingAd(ad); setAdLogoUrl(ad.logo_url); setAdPlacement(ad.placement); setAdProviderId(ad.provider_id || ""); setAdDialogOpen(true) }}><Edit className="h-4 w-4" /> 编辑</Button>
                           <Button size="sm" variant="destructive" className="gap-1" onClick={() => handleDeleteAdvertisement(ad.id)}><Trash2 className="h-4 w-4" /> 删除</Button>
                         </div>
@@ -1494,7 +1495,7 @@ export default function AdminDashboard() {
                 <CardContent>
                   <div className="space-y-2">
                     {advertisements.filter(a => a.placement === 'comments_sidebar').map((ad) => (
-                      <div key={ad.id} className="flex items-center justify-between p-3 border border-border/50 rounded-lg">
+                      <div key={ad.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 border border-border/50 rounded-lg gap-2">
                         <div className="flex items-center gap-3 min-w-0">
                           {ad.logo_url && <img src={ad.logo_url} alt="" className="w-8 h-8 rounded object-cover shrink-0" />}
                           <div className="min-w-0">
@@ -1504,7 +1505,7 @@ export default function AdminDashboard() {
                             </div>
                           </div>
                         </div>
-                        <div className="flex gap-2 shrink-0">
+                        <div className="flex flex-wrap gap-2 shrink-0">
                           <Button size="sm" variant="outline" className="gap-1" onClick={() => { setEditingAd(ad); setAdLogoUrl(ad.logo_url); setAdPlacement(ad.placement); setAdProviderId(ad.provider_id || ""); setAdDialogOpen(true) }}><Edit className="h-4 w-4" /> 编辑</Button>
                           <Button size="sm" variant="destructive" className="gap-1" onClick={() => handleDeleteAdvertisement(ad.id)}><Trash2 className="h-4 w-4" /> 删除</Button>
                         </div>
@@ -1597,13 +1598,13 @@ export default function AdminDashboard() {
                     const availableCodes = trial.trial_codes?.filter(c => c.status === 'available').length || 0
                     const claimedCodes = totalCodes - availableCodes
                     return (
-                    <div key={trial.id} className="flex items-center justify-between p-4 border border-border/50 rounded-lg">
+                    <div key={trial.id} className="flex flex-col lg:flex-row lg:items-center justify-between p-4 border border-border/50 rounded-lg gap-3">
                       <div className="flex items-center gap-4 min-w-0">
                         <div className="shrink-0 w-14 h-14 rounded-lg bg-green-500/10 flex items-center justify-center">
                           <span className="text-lg font-bold text-green-600">{trial.amount}</span>
                         </div>
                         <div className="min-w-0">
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 flex-wrap">
                             <span className="font-semibold">{trial.amount}</span>
                             <Badge variant={trial.is_active ? 'default' : 'secondary'}>
                               {trial.is_active ? '有效' : '已下线'}
@@ -1625,7 +1626,7 @@ export default function AdminDashboard() {
                           </p>
                         </div>
                       </div>
-                      <div className="flex gap-2 shrink-0">
+                      <div className="flex flex-wrap gap-2 shrink-0">
                         <Button size="sm" variant="outline" className="gap-1 text-green-600 border-green-500/30 hover:bg-green-500/10" onClick={() => { setAddCodesTarget(trial.id); setAddCodesDialogOpen(true) }}>
                           <Plus className="h-4 w-4" /> 加码
                         </Button>

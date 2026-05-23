@@ -273,21 +273,21 @@ export default function AdminNewProviderPage() {
               </div>
               <div className="space-y-3">
                 {models.map((mp, index) => (
-                  <div key={index} className="flex gap-3 items-end p-4 rounded-lg border border-border bg-card/50">
-                    <div className="flex-1">
+                  <div key={index} className="flex flex-col sm:flex-row gap-3 items-start sm:items-end p-4 rounded-lg border border-border bg-card/50">
+                    <div className="flex-1 w-full sm:w-auto">
                       <label className="text-xs text-muted-foreground mb-1.5 block">模型名称 <span className="text-destructive">*</span></label>
                       <Input placeholder="如：gpt-4o、claude" value={mp.model} onChange={(e) => updateModel(index, "model", e.target.value)} required className="h-10" />
                     </div>
-                    <div className="w-28">
+                    <div className="w-full sm:w-28">
                       <label className="text-xs text-muted-foreground mb-1.5 block">价格 (元/1M) <span className="text-destructive">*</span></label>
                       <Input type="number" step="0.01" placeholder="0.00" value={mp.price} onChange={(e) => updateModel(index, "price", e.target.value)} required className="h-10" />
                     </div>
-                    <div className="w-24">
+                    <div className="w-full sm:w-24">
                       <label className="text-xs text-muted-foreground mb-1.5 block">输出倍率</label>
                       <Input type="number" step="0.1" placeholder="1" value={mp.multiplier} onChange={(e) => updateModel(index, "multiplier", e.target.value)} className="h-10" />
                     </div>
                     {models.length > 1 && (
-                      <Button type="button" variant="ghost" size="sm" onClick={() => removeModel(index)} className="h-10 w-10 p-0 text-muted-foreground hover:text-destructive"><X className="h-4 w-4" /></Button>
+                      <Button type="button" variant="ghost" size="sm" onClick={() => removeModel(index)} className="h-10 w-10 p-0 text-muted-foreground hover:text-destructive shrink-0"><X className="h-4 w-4" /></Button>
                     )}
                   </div>
                 ))}
