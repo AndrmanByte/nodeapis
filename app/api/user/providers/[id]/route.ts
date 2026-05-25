@@ -1,6 +1,38 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 
+// 获取自己的店铺详情
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) {
+      return NextResponse.json({ success: false, error: '未登录' }, { status: 401 })
+    }
+
+    const { data: provider, error } = await supabase
+      .from('providers')
+      .select('*')
+      .eq('id', id)
+      .eq('owner_id', user.id)
+      .single()
+
+    if (error || !provider) {
+      return NextResponse.json({ success: false, error: '店铺不存在或无权限访问' }, { status: 404 })
+    }
+
+    return NextResponse.json({ success: true, data: provider })
+  } catch (error) {
+    console.error('Get provider error:', error)
+    return NextResponse.json({ success: false, error: '获取店铺失败' }, { status: 500 })
+  }
+}
+
 // 更新自己的店铺
 export async function PUT(
   request: NextRequest,
@@ -27,7 +59,12 @@ export async function PUT(
     }
 
     const body = await request.json()
-    const { name, description, website, logo_url, status, features, supported_models, pricing } = body
+    const {
+      name, description, website, logo_url, status, features,
+      supported_models, pricing, short_description, screenshot_url,
+      api_url, contact_email, contact, register_type, min_deposit,
+      payment_methods, advantages, supported_vendors
+    } = body
 
     const { data, error } = await supabase
       .from('providers')
@@ -39,7 +76,17 @@ export async function PUT(
         status,
         features,
         supported_models,
-        pricing
+        pricing,
+        short_description,
+        screenshot_url,
+        api_url,
+        contact_email,
+        contact,
+        register_type,
+        min_deposit,
+        payment_methods,
+        advantages,
+        supported_vendors
       })
       .eq('id', id)
       .select()

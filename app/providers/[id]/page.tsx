@@ -402,16 +402,16 @@ export default function ProviderDetailPage() {
 
                       if (qaPairs.length > 0) {
                         return (
-                          <div className="space-y-3">
+                          <div className="space-y-4">
                             {qaPairs.map((pair, j) => (
-                              <div key={j} className="rounded-lg border border-border/60 overflow-hidden">
-                                <div className="flex items-start gap-2.5 p-3.5 bg-purple-500/5">
-                                  <span className="w-5 h-5 rounded bg-purple-500/15 text-purple-600 flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">Q</span>
-                                  <span className="text-sm font-medium text-foreground leading-relaxed">{pair.q}</span>
+                              <div key={j} className="space-y-2">
+                                <div className="flex items-start gap-2">
+                                  <span className="text-primary font-semibold text-sm shrink-0">Q.</span>
+                                  <p className="text-sm font-medium text-foreground leading-relaxed">{pair.q}</p>
                                 </div>
-                                <div className="flex items-start gap-2.5 p-3.5 border-t border-border/40">
-                                  <span className="w-5 h-5 rounded bg-green-500/15 text-green-600 flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">A</span>
-                                  <span className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">{pair.a}</span>
+                                <div className="flex items-start gap-2 pl-0.5">
+                                  <span className="text-green-500 font-semibold text-sm shrink-0">A.</span>
+                                  <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">{pair.a}</p>
                                 </div>
                               </div>
                             ))}

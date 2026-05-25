@@ -60,7 +60,6 @@ export default function SubmitPage() {
   const [aiLoading, setAiLoading] = useState(false)
   const [loginDialogOpen, setLoginDialogOpen] = useState(false)
   const [paymentMethods, setPaymentMethods] = useState<string[]>([])
-  const [freeTrial, setFreeTrial] = useState(false)
   const [advantages, setAdvantages] = useState<string[]>([])
   const [advantageInput, setAdvantageInput] = useState("")
 
@@ -142,7 +141,7 @@ export default function SubmitPage() {
       const res = await fetch("/api/submissions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...formData, supported_vendors: selectedVendors, supported_models: pricing.map((p) => p.model), pricing, features: customTags, payment_methods: paymentMethods, free_trial: freeTrial, advantages }),
+        body: JSON.stringify({ ...formData, supported_vendors: selectedVendors, supported_models: pricing.map((p) => p.model), pricing, features: customTags, payment_methods: paymentMethods, advantages }),
       })
       if (res.ok) { setStatus("success") } else { const data = await res.json(); if (res.status === 401) { setLoginDialogOpen(true) } else { setStatus("error"); setErrorMsg(data.error || "提交失败") } }
     } catch { setStatus("error"); setErrorMsg("网络错误") } finally { setLoading(false) }
@@ -368,10 +367,6 @@ export default function SubmitPage() {
                           )
                         })}
                       </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <input type="checkbox" id="free_trial" checked={freeTrial} onChange={(e) => setFreeTrial(e.target.checked)} className="w-4 h-4 rounded border-border" />
-                      <label htmlFor="free_trial" className="text-sm font-medium text-foreground">提供免费试用 / 免费额度</label>
                     </div>
                   </div>
 
